@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS users (
   salt TEXT NOT NULL,
   color TEXT NOT NULL DEFAULT '#6d7cff',
   created_at INTEGER NOT NULL,
-  storage_limit INTEGER NOT NULL
+  storage_limit INTEGER NOT NULL,
+  is_admin INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS sessions (
   token TEXT PRIMARY KEY,
@@ -143,6 +144,14 @@ CREATE TABLE IF NOT EXISTS backups (
   created_at INTEGER NOT NULL
 );
 `)
+
+// قاعدة البيانات القديمة ما كانش فيها دور أدمن — نضيف العمود ونرقّي أول مستخدم.
+const userColumns = db.prepare('PRAGMA table_info(users)').all()
+if (!userColumns.some((c) => c.name === 'is_admin')) {
+  db.exec('ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0')
+  const first = db.prepare('SELECT id FROM users ORDER BY created_at ASC LIMIT 1').get()
+  if (first) db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(first.id)
+}
 
 export const all = (sql, ...params) => db.prepare(sql).all(...params)
 export const get = (sql, ...params) => db.prepare(sql).get(...params)

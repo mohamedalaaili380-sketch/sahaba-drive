@@ -82,6 +82,14 @@ export function requireUser(req) {
   return user
 }
 
+export const userIsAdmin = (user) => !!user?.is_admin
+
+export function requireAdmin(req) {
+  const user = requireUser(req)
+  if (!userIsAdmin(user)) fail(403, 'هذه العملية للمدير فقط')
+  return user
+}
+
 export function setSession(res, userId) {
   const token = newToken()
   run('INSERT INTO sessions (token, user_id, created_at, expires_at) VALUES (?,?,?,?)',
@@ -101,7 +109,8 @@ const level = { viewer: 1, editor: 2, owner: 3 }
 export function spaceRole(userId, spaceId) {
   const space = get('SELECT * FROM spaces WHERE id = ?', spaceId)
   if (!space) return null
-  if (space.owner_id === userId) return 'owner'
+  const user = get('SELECT is_admin FROM users WHERE id = ?', userId)
+  if (userIsAdmin(user) || space.owner_id === userId) return 'owner'
   const member = get('SELECT role FROM space_members WHERE space_id = ? AND user_id = ?', spaceId, userId)
   return member?.role || null
 }

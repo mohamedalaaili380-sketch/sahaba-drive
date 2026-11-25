@@ -5,6 +5,7 @@ import type { User } from './types'
 import Auth from './components/Auth'
 import DriveApp from './components/DriveApp'
 import PublicShare from './components/PublicShare'
+import { LangProvider } from './i18n'
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null)
@@ -20,15 +21,14 @@ export default function App() {
     }).finally(() => setChecking(false))
   }, [])
 
-  if (shareMatch) return <PublicShare token={decodeURIComponent(shareMatch[1])} />
+  const content = shareMatch ? <PublicShare token={decodeURIComponent(shareMatch[1])} />
+    : checking ? (
+      <div className="grid h-full place-items-center bg-[#080c18] text-[#9aa9ff]">
+        <div className="flex flex-col items-center gap-4"><Cloud size={42} className="animate-pulse" /><Loader2 className="spin" size={17} /></div>
+      </div>
+    )
+      : !user ? <Auth onAuth={setUser} />
+        : <DriveApp user={user} onLogout={() => post('/auth/logout').finally(() => { localStorage.removeItem('sahaba_token'); setUser(null) })} />
 
-  if (checking) return (
-    <div className="grid h-full place-items-center bg-[#080c18] text-[#9aa9ff]">
-      <div className="flex flex-col items-center gap-4"><Cloud size={42} className="animate-pulse" /><Loader2 className="spin" size={17} /></div>
-    </div>
-  )
-
-  if (!user) return <Auth onAuth={setUser} />
-
-  return <DriveApp user={user} onLogout={() => post('/auth/logout').finally(() => { localStorage.removeItem('sahaba_token'); setUser(null) })} />
+  return <LangProvider>{content}</LangProvider>
 }

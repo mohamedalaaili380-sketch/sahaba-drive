@@ -1,3 +1,5 @@
+import { currentLang, translate } from './i18n'
+
 export class ApiError extends Error {
   constructor(message: string, public status: number, public code?: string) {
     super(message)
@@ -12,7 +14,7 @@ export async function api<T = any>(path: string, init: RequestInit = {}): Promis
   })
   if (!res.ok) {
     const data = await res.json().catch(() => ({}))
-    throw new ApiError(data.error || `خطأ ${res.status}`, res.status, data.code)
+    throw new ApiError(data.error || translate('Error {status}', 'خطأ {status}', { status: res.status }), res.status, data.code)
   }
   if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
@@ -33,10 +35,10 @@ export async function uploadFile(file: File, space: string, parent: string | nul
       try {
         const data = JSON.parse(xhr.responseText)
         if (xhr.status >= 200 && xhr.status < 300) resolve(data)
-        else reject(new Error(data.error || 'فشل الرفع'))
-      } catch { reject(new Error('فشل الرفع')) }
+        else reject(new Error(data.error || translate('Upload failed', 'فشل الرفع')))
+      } catch { reject(new Error(translate('Upload failed', 'فشل الرفع'))) }
     }
-    xhr.onerror = () => reject(new Error('فشل الاتصال بالسيرفر'))
+    xhr.onerror = () => reject(new Error(translate('Cannot reach the server', 'فشل الاتصال بالسيرفر')))
     xhr.send(file)
   })
 }
@@ -45,14 +47,16 @@ export const contentUrl = (id: string, version?: number, inline = false) =>
   `/api/items/${encodeURIComponent(id)}/content${version ? `?version=${version}` : ''}${inline ? `${version ? '&' : '?'}inline=1` : ''}`
 
 export function formatBytes(n: number): string {
-  if (!n) return '0 بايت'
-  const units = ['بايت', 'ك.ب', 'م.ب', 'ج.ب', 'ت.ب']
+  if (!n) return translate('0 B', '0 بايت')
+  const units = currentLang() === 'ar'
+    ? ['بايت', 'ك.ب', 'م.ب', 'ج.ب', 'ت.ب']
+    : ['B', 'KB', 'MB', 'GB', 'TB']
   const i = Math.min(Math.floor(Math.log(n) / Math.log(1024)), 4)
   return `${(n / 1024 ** i).toFixed(i ? 1 : 0)} ${units[i]}`
 }
 
 export function formatDate(ts: number): string {
-  return new Intl.DateTimeFormat('ar-EG', { dateStyle: 'medium', timeStyle: 'short' }).format(ts)
+  return new Intl.DateTimeFormat(currentLang() === 'ar' ? 'ar-EG' : 'en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(ts)
 }
 
 export function fileExt(name: string): string {

@@ -13,11 +13,12 @@ export const routes = [
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) fail(400, 'البريد الإلكتروني غير صحيح')
       if (password.length < 8) fail(400, 'كلمة المرور لازم تكون 8 حروف على الأقل')
       if (get('SELECT id FROM users WHERE email = ?', email)) fail(409, 'البريد مستخدم بالفعل')
+      const isAdmin = get('SELECT id FROM users LIMIT 1') ? 0 : 1
       const { salt, hash } = hashPassword(password)
       const userId = newId()
       const spaceId = newId()
-      run('INSERT INTO users (id,name,email,password_hash,salt,created_at,storage_limit) VALUES (?,?,?,?,?,?,?)',
-        userId, name, email, hash, salt, now(), DEFAULT_STORAGE_LIMIT)
+      run('INSERT INTO users (id,name,email,password_hash,salt,created_at,storage_limit,is_admin) VALUES (?,?,?,?,?,?,?,?)',
+        userId, name, email, hash, salt, now(), DEFAULT_STORAGE_LIMIT, isAdmin)
       run('INSERT INTO spaces (id,kind,name,owner_id,created_at) VALUES (?,?,?,?,?)',
         spaceId, 'personal', 'درايفي', userId, now())
       run('INSERT INTO space_members (space_id,user_id,role) VALUES (?,?,?)', spaceId, userId, 'owner')
@@ -42,7 +43,8 @@ export const routes = [
   } },
   { method: 'GET', pattern: /^\/api\/auth\/me$/, handler({ req, res }) {
     const user = requireUser(req)
-    sendJson(res, 200, { user: publicUser(user), personalSpace: get('SELECT id FROM spaces WHERE owner_id = ? AND kind = ?', user.id, 'personal').id })
+    const personal = get('SELECT id FROM spaces WHERE owner_id = ? AND kind = ?', user.id, 'personal')
+    sendJson(res, 200, { user: publicUser(user), personalSpace: personal?.id || '' })
   } },
   { method: 'PATCH', pattern: /^\/api\/auth\/me$/, async handler({ req, res, body }) {
     const user = requireUser(req)
@@ -59,5 +61,5 @@ export const routes = [
 ]
 
 export function publicUser(user) {
-  return { id: user.id, name: user.name, email: user.email, color: user.color, createdAt: user.created_at, storageLimit: user.storage_limit }
+  return { id: user.id, name: user.name, email: user.email, color: user.color, createdAt: user.created_at, storageLimit: user.storage_limit, isAdmin: !!user.is_admin }
 }

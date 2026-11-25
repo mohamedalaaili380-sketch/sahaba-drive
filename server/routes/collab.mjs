@@ -1,6 +1,6 @@
 import { WebSocketServer } from 'ws'
 import {
-  now, newId, fail, requireUser, sendJson, itemAccess, serializeItem, activity,
+  now, newId, fail, requireUser, sendJson, itemAccess, serializeItem, activity, userIsAdmin,
 } from '../util.mjs'
 import { all, get, run } from '../db.mjs'
 import { bus, emit } from '../events.mjs'
@@ -142,9 +142,11 @@ export const routes = [
   { method: 'GET', pattern: /^\/api\/activity$/, handler({ req, res, url }) {
     const user = requireUser(req)
     const limit = Math.min(Number(url.searchParams.get('limit') || 50), 200)
-    const rows = all(`SELECT a.*, u.name AS user_name FROM activity a JOIN users u ON u.id = a.user_id
-      WHERE a.user_id = ? OR a.item_id IN (SELECT i.id FROM items i JOIN space_members m ON m.space_id = i.space_id WHERE m.user_id = ?)
-      ORDER BY a.created_at DESC LIMIT ?`, user.id, user.id, limit)
+    const rows = userIsAdmin(user)
+      ? all(`SELECT a.*, u.name AS user_name FROM activity a JOIN users u ON u.id = a.user_id ORDER BY a.created_at DESC LIMIT ?`, limit)
+      : all(`SELECT a.*, u.name AS user_name FROM activity a JOIN users u ON u.id = a.user_id
+        WHERE a.user_id = ? OR a.item_id IN (SELECT i.id FROM items i JOIN space_members m ON m.space_id = i.space_id WHERE m.user_id = ?)
+        ORDER BY a.created_at DESC LIMIT ?`, user.id, user.id, limit)
     sendJson(res, 200, { activity: rows })
   } },
   { method: 'GET', pattern: /^\/api\/notifications$/, handler({ req, res }) {
@@ -166,8 +168,12 @@ export const routes = [
   { method: 'GET', pattern: /^\/api\/search$/, handler({ req, res, url }) {
     const user = requireUser(req)
     const p = url.searchParams
-    const conditions = ['i.deleted_at IS NULL', '(s.owner_id = ? OR m.user_id = ?)']
-    const params = [user.id, user.id]
+    const conditions = ['i.deleted_at IS NULL']
+    const params = []
+    if (!userIsAdmin(user)) {
+      conditions.push('(s.owner_id = ? OR m.user_id = ?)')
+      params.push(user.id, user.id)
+    }
     const q = (p.get('q') || '').trim()
     if (q) { conditions.push('(i.name LIKE ? OR i.description LIKE ?)'); params.push(`%${q}%`, `%${q}%`) }
     const kind = p.get('kind')

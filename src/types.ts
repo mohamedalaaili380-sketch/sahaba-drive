@@ -5,6 +5,25 @@ export type User = {
   color: string
   createdAt: number
   storageLimit: number
+  isAdmin: boolean
+}
+
+export type AdminUser = User & {
+  used: number
+  items: number
+  spaces: number
+}
+
+export type AdminSpace = {
+  id: string
+  kind: 'personal' | 'team'
+  name: string
+  owner_id: string
+  owner: { name: string; email: string; color: string } | null
+  members: number
+  files: number
+  size: number
+  createdAt: number
 }
 
 export type Tag = { id: string; user_id: string; name: string; color: string }

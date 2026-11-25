@@ -14,10 +14,11 @@ import * as teams from './routes/teams.mjs'
 import * as shares from './routes/shares.mjs'
 import * as publicRoutes from './routes/public.mjs'
 import * as health from './routes/health.mjs'
+import * as admin from './routes/admin.mjs'
 
 const routes = [
   ...health.routes, ...auth.routes, ...items.routes, ...collab.routes,
-  ...teams.routes, ...shares.routes, ...publicRoutes.routes,
+  ...teams.routes, ...shares.routes, ...publicRoutes.routes, ...admin.routes,
 ]
 
 const MIME = {
