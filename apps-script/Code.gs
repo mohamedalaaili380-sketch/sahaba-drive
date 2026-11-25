@@ -1,8 +1,10 @@
 /**
  * سَحابة — Google Drive blob storage bridge (Apps Script Web App)
- * Deploy: Execute as me | Access: Anyone. Keep TOKEN secret.
+ * Deploy: Execute as me | Access: Anyone.
+ * Before deploying, add a Script Property named SAHABA_TOKEN with a long random secret
+ * (Project Settings → Script Properties) and use the same value in the server env var.
  */
-const TOKEN = '2aec540600939633e9d738acfb74d082a2cd324fbfd28c06'
+const TOKEN = PropertiesService.getScriptProperties().getProperty('SAHABA_TOKEN') || ''
 const ROOT_FOLDER = 'sahaba-drive-storage'
 
 function json(data) {
@@ -13,7 +15,7 @@ function ok(data) { return json(Object.assign({ ok: true }, data || {})) }
 function bad(message) { return json({ ok: false, error: String(message) }) }
 function checkToken(e, body) {
   const token = (e.parameter && e.parameter.token) || (body && body.token)
-  if (token !== TOKEN) throw new Error('unauthorized')
+  if (!TOKEN || token !== TOKEN) throw new Error('unauthorized')
 }
 function cleanName(name) {
   return String(name || 'blob').split('/').join('_').split('\\').join('_').slice(0, 120)
@@ -29,7 +31,7 @@ function doGet(e) {
   try {
     checkToken(e)
     const p = e.parameter || {}
-    if (p.action === 'ping') return ok({ service: 'sahaba-drive', version: 1 })
+    if (p.action === 'ping') return ok({ service: 'sahaba-drive', version: 2 })
     if (p.action === 'download') {
       if (!p.id) return bad('missing id')
       const file = DriveApp.getFileById(p.id)

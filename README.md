@@ -72,11 +72,12 @@ npm start          # http://localhost:4000 — يقدّم الواجهة وال�
 محتوى الملفات بس بيتخزن في مجلدات `sahaba-drive-storage-*` داخل Google Drive عبر Apps Script Web App.
 
 1. افتح [Google Apps Script](https://script.google.com)، أنشئ مشروع و الصق محتوى `apps-script/Code.gs`.
-2. Deploy → New deployment → Web app: **Execute as Me** و **Who has access: Anyone**.
-3. ضع رابط `/exec` في `SAHABA_DRIVE_WEBAPP_URL` والتوكن في `SAHABA_DRIVE_TOKEN`، ثم أعد تشغيل السيرفر.
-4. جرّب: `curl "<WEBAPP_URL>?token=<TOKEN>&action=ping"` → لازم يرجع `{"ok":true,...}`.
+2. من **Project Settings → Script Properties** أضف خاصية اسمها `SAHABA_TOKEN` وقيمتها توكن عشوائي طويل (`node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"`). التوكن مش مكتوب في الكود.
+3. Deploy → New deployment → Web app: **Execute as Me** و **Who has access: Anyone**.
+4. ضع رابط `/exec` في `SAHABA_DRIVE_WEBAPP_URL` ونفس التوكن في `SAHABA_DRIVE_TOKEN`، ثم أعد تشغيل السيرفر.
+5. جرّب: `curl "<WEBAPP_URL>?token=<TOKEN>&action=ping"` → لازم يرجع `{"ok":true,...}`.
 
-> التوكن سري؛ أي حد يعرفه يقدر يرفع/ينزّل/يمسح blobs في Drive. خزّنه كـ secret on the server فقط.
+> التوكن سري؛ أي حد يعرفه (مع الرابط) يقدر يرفع/ينزّل/يمسح blobs في Drive. خزّنه في Script Properties وفي متغيرات بيئة السيرفر فقط — مش في الـ repo.
 > حد الرفع العملي في وضع Drive هو 20MB للملف (حد URL Fetch في Apps Script = 50MB، والـ base64 يكبّر الحجم ~33%).
 
 ---
