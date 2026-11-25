@@ -92,14 +92,14 @@ export async function saveBlobStream(req, blobId, maxBytes = MAX_UPLOAD_BYTES, n
   return { id: blobId, size: received }
 }
 
-export async function saveBlobBuffer(buffer, blobId, name) {
+export async function saveBlobBuffer(buffer, blobId, name, space = 'sahaba') {
   if (STORAGE_MODE === 'drive') {
     const data = await drivePost({
       action: 'upload',
       data: buffer.toString('base64'),
       name: name || blobId,
-      mime: 'text/plain',
-      space: 'sahaba',
+      mime: 'application/octet-stream',
+      space,
     })
     return { id: data.id, size: data.size ?? buffer.length }
   }

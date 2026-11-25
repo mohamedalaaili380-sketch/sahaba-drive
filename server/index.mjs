@@ -4,6 +4,8 @@ import path from 'node:path'
 import { HOST, PORT, PRODUCTION, ROOT } from './config.mjs'
 import { HttpError, readJson, sendError, sendJson } from './util.mjs'
 import { setupWebsocket } from './routes/collab.mjs'
+import { applyRateLimit } from './rate-limit.mjs'
+import { startBackups } from './backup.mjs'
 
 import * as auth from './routes/auth.mjs'
 import * as items from './routes/items.mjs'
@@ -11,9 +13,10 @@ import * as collab from './routes/collab.mjs'
 import * as teams from './routes/teams.mjs'
 import * as shares from './routes/shares.mjs'
 import * as publicRoutes from './routes/public.mjs'
+import * as health from './routes/health.mjs'
 
 const routes = [
-  ...auth.routes, ...items.routes, ...collab.routes,
+  ...health.routes, ...auth.routes, ...items.routes, ...collab.routes,
   ...teams.routes, ...shares.routes, ...publicRoutes.routes,
 ]
 
@@ -46,6 +49,8 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`)
     const pathname = decodeURIComponent(url.pathname)
+
+    if (!applyRateLimit(req, res, pathname)) return
 
     if (!pathname.startsWith('/api/')) {
       if (!PRODUCTION) {
@@ -87,6 +92,8 @@ if (process.env.SAHABA_DRIVE_MIGRATE_FROM_URL) {
     throw err
   }
 }
+
+startBackups()
 
 server.listen(PORT, HOST, () => {
   console.log(`☁️  سَحابة API جاهز على http://${HOST}:${PORT}`)

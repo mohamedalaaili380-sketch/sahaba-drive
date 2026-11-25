@@ -18,6 +18,7 @@
 | **تطبيقات سطح المكتب والموبايل** | PWA قابل للتثبيت على كل المنصات + عميل مزامنة سطح المكتب (`sync/client.mjs`) يرفع مجلد محلي تلقائياً. |
 | **الأساسيات** | رفع بالسحب والإفلات، مجلدات، نسخ/نقل/إعادة تسمية، مفضلة، سلة مهملات واستعادة، معاينة صور/فيديو/صوت/PDF/نصوص، وواجهة عربية RTL متجاوبة. |
 | **مباشر (Realtime)** | WebSocket للتحديثات والإشعارات والتعليقات وحالة الاتصال — بدون polling. |
+| **مراقبة وصيانة** | `/api/health` لفحص SQLite و Drive، نسخة احتياطية دورية لـ SQLite، وتحديد لمعدل الطلبات لكل IP. |
 
 ---
 
@@ -64,6 +65,15 @@ npm start          # http://localhost:4000 — يقدّم الواجهة وال�
 | `SAHABA_DRIVE_TOKEN` | — | التوكن السري المطابق للتوكن داخل `Code.gs` للحساب الحالي. |
 | `SAHABA_DRIVE_MIGRATE_FROM_URL` | — | رابط `/exec` لحساب Drive القديم. ضبطه يعمل نقل لمرة واحدة عند إقلاع السيرفر. |
 | `SAHABA_DRIVE_MIGRATE_FROM_TOKEN` | — | توكن الـ Web App القديم. مطلوب مع المتغير اللي قبله؛ يُحذف هو والرابط بعد النقل. |
+| `SAHABA_BACKUP_ENABLED` | `1` | تفعيل النسخ الاحتياطي الدوري لـ SQLite (`0` للإيقاف). |
+| `SAHABA_BACKUP_INTERVAL_HOURS` | `24` | كل ساعة/ساعات بيتم أخذ نسخة جديدة. |
+| `SAHABA_BACKUP_INITIAL_DELAY_MS` | `15000` | تأخير أول نسخة بعد الإقلاع (مفيد للاختبار). |
+| `SAHABA_BACKUP_RETENTION` | `7` | عدد النسخ المحتفظ بها؛ الأقدم تُحذف تلقائياً. |
+| `SAHABA_BACKUP_SPACE` | `backups` | مجلد Drive الذي تستقبل النسخ: `sahaba-drive-storage-backups`. |
+| `SAHABA_RATE_WINDOW_MS` | `60000` | نافذة تحديد معدل الطلبات لكل IP. |
+| `SAHABA_RATE_MAX` | `120` | أقصى طلبات لكل IP في النافذة (عدا المصادقة والـ health). |
+| `SAHABA_AUTH_RATE_WINDOW_MS` | `600000` | نافذة طلبات الدخول/التسجيل. |
+| `SAHABA_AUTH_RATE_MAX` | `10` | أقصى محاولات دخول/تسجيل لكل IP في النافذة. |
 
 ---
 
@@ -94,6 +104,30 @@ npm start          # http://localhost:4000 — يقدّم الواجهة وال�
 4. بعد ما النقل ينجح وتتأكد إن التنزيل شغال، **احذف المتغيرين `SAHABA_DRIVE_MIGRATE_*`** وأعد التشغيل عشان النقل ما يتكررش.
 
 > فشل أي ملف أثناء النقل يخلي المعرّفات القديمة كما هي والسيرفر **ما يبدأش** (عشان ما يترفعش ملف جديد على الحساب الجديد والقديم لسه مستخدم). أعد المحاولة بعد إصلاح السبب. بعد نجاح النقل، الملفات الجديدة بتترفع على الحساب الجديد مباشرة.
+
+### فحص الصحة (Health check)
+
+`GET /api/health` متاح للعامة ويرجع حالة SQLite والـ Web App وآخر نسخة احتياطية:
+
+```bash
+curl https://sahaba-drive.de.deplexo.com/api/health
+```
+
+الرد بيشمل `ok`, `db`, `drive.ok`, `drive.latencyMs`, `backup`. لو قاعدة البيانات أو Drive مش سليمين، حالة الرد تبقى `503`.
+
+### نسخ SQLite الاحتياطي
+
+- أول نسخة بعد 15 ثانية من الإقلاع، وبعدها كل `SAHABA_BACKUP_INTERVAL_HOURS`.
+- في وضع Drive تترفع نسخة `.sqlite` في مجلد `sahaba-drive-storage-backups` — وفي الوضع المحلي تتنقل إلى `data/backups/`.
+- عدد النسخ محكوم بـ `SAHABA_BACKUP_RETENTION`، والأقدم تُحذف تلقائياً.
+- النسخة مأخوذة بـ `VACUUM INTO`، يعني لقطة متسقة حتى لو كان فيه WAL.
+
+### تحديد معدل الطلبات
+
+- كل طلبات `/api/` (عدا `/api/health`) محدودة بـ `SAHABA_RATE_MAX` في `SAHABA_RATE_WINDOW_MS` لكل IP.
+- `/api/auth/login` و `/api/auth/register` ليهم حد أشد: `SAHABA_AUTH_RATE_MAX` في `SAHABA_AUTH_RATE_WINDOW_MS`.
+- عند التجاوز الرد بيبقى `429` مع `Retry-After`، وكل رد بيحمل هيدرات `x-ratelimit-*`.
+- خلف reverse proxy زي Deplexo بيتم استخدام `x-forwarded-for` لتحديد عنوان العميل.
 
 ---
 
@@ -147,8 +181,11 @@ cloudbox/
 │   ├── db.mjs                # مخطط SQLite (node:sqlite)
 │   ├── storage.mjs           # تخزين الـ blobs: محلي أو Google Drive
 │   ├── migrate.mjs           # نقل الـ blobs من Web App قديم لجديد (مرة واحدة)
+│   ├── backup.mjs            # نسخ SQLite الاحتياطي إلى Drive أو مجلد محلي
+│   ├── rate-limit.mjs        # تحديد معدل الطلبات لكل IP
 │   ├── util.mjs              # مصادقة، صلاحيات، تخزين، أحداث
 │   └── routes/
+│       ├── health.mjs        # GET /api/health
 │       ├── auth.mjs          # تسجيل / دخول / ملف شخصي
 │       ├── items.mjs         # ملفات، مجلدات، رفع، إصدارات، سلة
 │       ├── collab.mjs        # WS، تعليقات، وسوم، إشعارات، بحث

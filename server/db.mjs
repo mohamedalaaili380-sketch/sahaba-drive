@@ -135,6 +135,13 @@ CREATE TABLE IF NOT EXISTS activity (
   detail TEXT NOT NULL DEFAULT '',
   created_at INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS backups (
+  id TEXT PRIMARY KEY,
+  blob_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  size INTEGER NOT NULL,
+  created_at INTEGER NOT NULL
+);
 `)
 
 export const all = (sql, ...params) => db.prepare(sql).all(...params)
