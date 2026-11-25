@@ -5,18 +5,19 @@ import {
   History, MessageSquare, Pencil, Copy, Move, Download, X, Plus,
   Folder, Info, Clock, ArrowUpDown, RefreshCw, FilePlus2,
 } from 'lucide-react'
-import { del, formatBytes, formatDate, get, patch, post, uploadFile } from '../api'
+import { contentUrl, del, formatBytes, formatDate, get, patch, post, uploadFile } from '../api'
 import type { AppNotification, Item, Space, Tag, User } from '../types'
 import { Empty, ItemIcon, Spinner, ToastStack } from './ui'
 import {
-  MoveDialog, SearchDialog, ShareDialog, StorageBar, TagsDialog, TeamsDialog, TextDialog, VersionsDialog,
+  BulkMoveDialog, BulkTagsDialog, MoveDialog, SearchDialog, ShareDialog, StorageBar, TagsDialog,
+  TeamsDialog, TextDialog, VersionsDialog,
 } from './Dialogs'
 import type { SearchFilters } from './Dialogs'
 import { CommentsPanel, Editor, Preview, useItemComments } from './Viewers'
 
 type View = 'drive' | 'starred' | 'trash' | 'shared' | 'search' | 'tag'
 type Dialog =
-  | { type: 'folder' }
+  | { type: 'folder' | 'bulkTags' | 'bulkMove' }
   | { type: 'rename' | 'move' | 'share' | 'versions' | 'tags'; item: Item }
   | null
 
@@ -49,6 +50,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
   const [teamsOpen, setTeamsOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [bulkBusy, setBulkBusy] = useState(false)
   const [used, setUsed] = useState(0)
   const [query, setQuery] = useState('')
   const [online, setOnline] = useState<{ id: string; name: string }[]>([])
@@ -143,6 +145,20 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
     return () => window.removeEventListener('click', close)
   }, [])
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null
+      const typing = el && ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName)
+      if (typing) return
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+        e.preventDefault()
+        if (items.length) setSelected(items.map((i) => i.id))
+      } else if (e.key === 'Escape') setSelected([])
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [items])
+
   function navigate(next: View, opts: { space?: string; tag?: string } = {}) {
     setView(next); setFolderId(null); setFilters(null); setTagFilter(null)
     if (opts.space) setSpaceId(opts.space)
@@ -186,6 +202,40 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
     else if (action === 'delete') del(`/items/${item.id}?permanent=1`).then(() => { refresh(); notify('تم الحذف نهائياً', 'ok') }).catch((e) => notify(e.message, 'err'))
   }
 
+  async function runBulk(action: string, extra: Record<string, unknown> = {}, done?: (count: number) => string) {
+    if (!selected.length || bulkBusy) return
+    setBulkBusy(true)
+    try {
+      const result = await post<{ count: number }>('/items/bulk', { action, ids: selected, ...extra })
+      setSelected([]); setDetail(null)
+      refresh()
+      notify(done ? done(result.count) : 'تم التنفيذ', 'ok')
+    } catch (e: any) {
+      notify(e.message, 'err')
+    } finally {
+      setBulkBusy(false)
+    }
+  }
+
+  async function bulkDownload() {
+    if (!selectedFiles.length) return notify('مفيش ملفات للتنزيل', 'info')
+    notify(`جاري تنزيل ${selectedFiles.length} ملف`, 'info')
+    for (const [i, item] of selectedFiles.entries()) {
+      const a = document.createElement('a')
+      a.href = contentUrl(item.id)
+      a.download = item.name
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      if (i < selectedFiles.length - 1) await new Promise((r) => setTimeout(r, 200))
+    }
+  }
+
+  function requestBulkMove() {
+    if (!sameSpace) return notify('كل العناصر المحدد لازم تكون في نفس المساحة', 'err')
+    setDialog({ type: 'bulkMove' })
+  }
+
   const ctxMenuItems = useMemo(() => {
     if (!ctx) return []
     const i = ctx.item
@@ -202,6 +252,11 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
     : view === 'starred' ? 'المفضلة' : view === 'trash' ? 'سلة المهملات' : view === 'shared' ? 'المشاركة معك'
       : view === 'tag' ? `وسم: ${tags.find((t) => t.id === tagFilter)?.name || ''}` : 'نتائج البحث'
   const unread = notifications.filter((n) => !n.read).length
+  const selectedItems = useMemo(() => items.filter((i) => selected.includes(i.id)), [items, selected])
+  const selectedFiles = selectedItems.filter((i) => i.kind === 'file')
+  const allSelected = items.length > 0 && selected.length === items.length
+  const allStarred = selectedItems.length > 0 && selectedItems.every((i) => i.starred)
+  const sameSpace = selectedItems.length > 0 && selectedItems.every((i) => i.space_id === selectedItems[0].space_id)
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-[#080c18] text-[#e8ecff]" onClick={() => setCtx(null)}>
@@ -291,6 +346,23 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
           ))}
           {view !== 'drive' && <h2 className="text-lg font-bold">{title}</h2>}
           <span className="rounded-full bg-white/5 px-2.5 py-1 text-[11px] text-[#8f9bc2]">{items.length} عنصر</span>
+          {selected.length > 0 && <div className="flex flex-wrap items-center gap-1 rounded-xl border border-[#6d7cff]/40 bg-[#6d7cff12] px-2 py-1">
+            <span className="px-1 text-[11px] font-bold text-[#aab6ff]">{selected.length} محدد</span>
+            <button disabled={bulkBusy} className="rounded-lg px-2 py-1 text-[11px] text-[#9aa6ce] hover:bg-white/10 disabled:opacity-40"
+              onClick={() => setSelected(allSelected ? [] : items.map((i) => i.id))}>{allSelected ? 'إلغاء الكل' : 'تحديد الكل'}</button>
+            <span className="mx-1 h-4 w-px bg-white/10" />
+            {bulkBusy ? <span className="px-2 text-[11px] text-[#9aa9ff]">جاري التنفيذ...</span> : view === 'trash' ? <>
+              <button className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-[#b8c4e8] hover:bg-white/10" onClick={() => runBulk('restore', {}, (n) => `تمت استعادة ${n} عنصر`)}><RefreshCw size={13} /> استعادة</button>
+              <button className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-rose-300 hover:bg-white/10" onClick={() => runBulk('delete', {}, (n) => `تم حذف ${n} عنصر نهائياً`)}><Trash2 size={13} /> حذف نهائي</button>
+            </> : <>
+              <button disabled={!selectedFiles.length} className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-[#b8c4e8] hover:bg-white/10 disabled:opacity-40" onClick={bulkDownload}><Download size={13} /> تنزيل</button>
+              <button className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-[#b8c4e8] hover:bg-white/10" onClick={() => runBulk(allStarred ? 'unstar' : 'star', {}, (n) => `تم تحديث ${n} عنصر`)}><Star size={13} fill={allStarred ? 'currentColor' : 'none'} /> {allStarred ? 'إزالة المفضلة' : 'مفضلة'}</button>
+              <button className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-[#b8c4e8] hover:bg-white/10" onClick={() => setDialog({ type: 'bulkTags' })}><TagIcon size={13} /> وسوم</button>
+              <button className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-[#b8c4e8] hover:bg-white/10" onClick={requestBulkMove}><Move size={13} /> نقل</button>
+              <button className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-rose-300 hover:bg-white/10" onClick={() => runBulk('trash', {}, (n) => `نُقل ${n} عنصر للسلة`)}><Trash2 size={13} /> سلة</button>
+            </>}
+            <button className="rounded-lg p-1 text-[#8f9bc2] hover:bg-white/10" title="إلغاء التحديد" onClick={() => { setSelected([]); setDetail(null) }}><X size={14} /></button>
+          </div>}
           <div className="mr-auto flex items-center gap-2">
             <button className="btn btn-ghost px-3 py-2 !text-xs" onClick={() => fileInput.current?.click()}><Upload size={15} /> رفع</button>
             <button className="btn btn-ghost px-3 py-2 !text-xs" onClick={() => setDialog({ type: 'folder' })}><FolderPlus size={15} /> مجلد</button>
@@ -338,8 +410,11 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
                 <span>الاسم</span><span className="max-md:hidden">الحجم</span><span>آخر تعديل</span><span>إجراءات</span>
               </div>
               {items.map((item) => (
-                <button key={item.id} onClick={() => { setSelected([item.id]); setDetail(item) }} onDoubleClick={() => openItem(item)}
-                  onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setCtx({ x: e.clientX, y: e.clientY, item }) }}
+                <button key={item.id} onClick={(e) => {
+                  if (e.ctrlKey || e.metaKey || e.shiftKey) setSelected((s) => s.includes(item.id) ? s.filter((x) => x !== item.id) : [...s, item.id])
+                  else { setSelected([item.id]); setDetail(item) }
+                }} onDoubleClick={() => openItem(item)}
+                  onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setCtx({ x: e.clientX, y: e.clientY, item }); setSelected([item.id]) }}
                   className={`grid w-full grid-cols-[1fr_120px_140px_100px] items-center gap-3 border-b border-white/5 px-4 py-2.5 text-right text-sm transition hover:bg-white/5 max-md:grid-cols-[1fr_80px_40px] ${selected.includes(item.id) ? 'bg-[#6d7cff1a]' : ''}`}>
                   <span className="flex min-w-0 items-center gap-3"><ItemIcon item={item} size={25} /><span className="truncate">{item.name}</span>{item.starred && <Star size={13} className="text-amber-400" fill="currentColor" />}</span>
                   <span className="text-xs text-[#8793bb] max-md:hidden">{item.kind === 'file' ? formatBytes(item.size) : '—'}</span>
@@ -412,6 +487,10 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
       {dialog?.type === 'share' && <ShareDialog item={dialog.item} onClose={() => setDialog(null)} notify={notify} />}
       {dialog?.type === 'versions' && <VersionsDialog item={dialog.item} onClose={() => setDialog(null)} notify={notify} />}
       {dialog?.type === 'tags' && <TagsDialog item={dialog.item} tags={tags} onClose={() => setDialog(null)} onChange={() => { loadShell(); loadItems() }} />}
+      {dialog?.type === 'bulkTags' && <BulkTagsDialog tags={tags} count={selected.length} onClose={() => setDialog(null)} onChange={loadShell}
+        onSave={(tagIds, mode) => runBulk(mode === 'add' ? 'tag' : 'untag', { tagIds }, (n) => `تم تعديل الوسوم لـ ${n} عنصر`)} />}
+      {dialog?.type === 'bulkMove' && <BulkMoveDialog count={selected.length} space={selectedItems[0]?.space_id || spaceId} excludeIds={selected} onClose={() => setDialog(null)}
+        onMove={(parentId) => runBulk('move', { parentId }, (n) => `تم نقل ${n} عنصر`)} />}
       {searchOpen && <SearchDialog tags={tags} initial={filters || { q: query } as any} onClose={() => setSearchOpen(false)}
         onSearch={(f) => { setFilters(f); setQuery(f.q); setView('search') }} />}
       {teamsOpen && <TeamsDialog onClose={() => { setTeamsOpen(false); loadShell() }} onChange={loadShell} notify={notify} />}

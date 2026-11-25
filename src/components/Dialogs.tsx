@@ -53,6 +53,42 @@ export function MoveDialog({ item, space, onMove, onClose }: {
   )
 }
 
+export function BulkMoveDialog({ count, space, excludeIds = [], onMove, onClose }: {
+  count: number; space: string; excludeIds?: string[]
+  onMove: (parentId: string | null) => Promise<void>; onClose: () => void
+}) {
+  const [folders, setFolders] = useState<Item[]>([])
+  const [target, setTarget] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  useEffect(() => {
+    get<{ items: Item[] }>(`/search?kind=folder&space=${encodeURIComponent(space)}`)
+      .then((d) => setFolders(d.items.filter((f) => !excludeIds.includes(f.id))))
+      .catch((e: any) => setError(e.message))
+  }, [space, excludeIds.join(',')])
+  return (
+    <Modal title="نقل جماعي" subtitle={`${count} عنصر محدد`} onClose={onClose} footer={<>
+      <button className="btn btn-ghost" onClick={onClose}>إلغاء</button>
+      <button className="btn btn-primary" disabled={busy} onClick={async () => {
+        setBusy(true); setError('')
+        try { await onMove(target); onClose() } catch (e: any) { setError(e.message) } finally { setBusy(false) }
+      }}>نقل هنا</button>
+    </>}>
+      <div className="max-h-80 space-y-1 overflow-auto">
+        <button onClick={() => setTarget(null)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm ${target === null ? 'bg-[#6d7cff33] text-white' : 'hover:bg-white/5'}`}>
+          <Folder size={18} className="text-[#f0b65c]" /> جذر المساحة {target === null && <Check size={16} className="mr-auto text-[#8b9cff]" />}
+        </button>
+        {folders.map((f) => (
+          <button key={f.id} onClick={() => setTarget(f.id)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm ${target === f.id ? 'bg-[#6d7cff33] text-white' : 'hover:bg-white/5'}`}>
+            <Folder size={18} className="text-[#f0b65c]" /> <span className="truncate">{f.name}</span>{target === f.id && <Check size={16} className="mr-auto text-[#8b9cff]" />}
+          </button>
+        ))}
+      </div>
+      {error && <p className="mt-3 text-sm text-rose-300">{error}</p>}
+    </Modal>
+  )
+}
+
 export function ShareDialog({ item, onClose, notify }: { item: Item; onClose: () => void; notify: (text: string, kind?: 'ok' | 'err') => void }) {
   const [shares, setShares] = useState<Share[]>([])
   const [permission, setPermission] = useState<'view' | 'download' | 'comment'>('view')
@@ -201,6 +237,53 @@ export function TagsDialog({ item, tags, onChange, onClose }: { item: Item; tags
           const created = tag; setSelected((s) => [...s, created.id]); await patch(`/items/${item.id}`, { tagIds: [...selected, created.id] })
         }}><Plus size={16} /> إضافة</button>
       </div>
+    </Modal>
+  )
+}
+
+export function BulkTagsDialog({ tags, count, onSave, onChange, onClose }: {
+  tags: Tag[]; count: number
+  onSave: (tagIds: string[], mode: 'add' | 'remove') => Promise<void>
+  onChange: () => void; onClose: () => void
+}) {
+  const [selected, setSelected] = useState<string[]>([])
+  const [newTag, setNewTag] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  const toggle = (id: string) => setSelected((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id])
+  const apply = async (mode: 'add' | 'remove') => {
+    if (!selected.length) { setError('اختار وسم على الأقل'); return }
+    setBusy(true); setError('')
+    try { await onSave(selected, mode); onClose() } catch (e: any) { setError(e.message) } finally { setBusy(false) }
+  }
+
+  return (
+    <Modal title="وسوم جماعية" subtitle={`${count} عنصر محدد`} onClose={onClose} footer={<>
+      <button className="btn btn-ghost" disabled={busy || !selected.length} onClick={() => apply('remove')}>إزالة المحدد</button>
+      <button className="btn btn-primary" disabled={busy || !selected.length} onClick={() => apply('add')}>إضافة المحدد</button>
+    </>}>
+      <div className="flex flex-wrap gap-2">
+        {tags.map((t) => (
+          <button key={t.id} disabled={busy} onClick={() => toggle(t.id)}
+            className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm ${selected.includes(t.id) ? 'text-white' : 'border-white/10 bg-white/5 text-[#9ba7cf]'}`}
+            style={selected.includes(t.id) ? { borderColor: t.color, background: `${t.color}33` } : {}}>
+            <span className="h-2 w-2 rounded-full" style={{ background: t.color }} />{t.name}{selected.includes(t.id) && <Check size={13} />}
+          </button>
+        ))}
+        {tags.length === 0 && <p className="text-sm text-[#7f8bb4]">مفيش وسوم — اعمل وسم جديد.</p>}
+      </div>
+      <div className="mt-5 flex gap-2 border-t border-white/10 pt-4">
+        <input className="field" value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="اسم وسم جديد" />
+        <button className="btn btn-ghost" disabled={busy || !newTag.trim()} onClick={async () => {
+          const { tag } = await post<{ tag: Tag }>('/tags', {
+            name: newTag.trim(),
+            color: ['#6d7cff', '#34d399', '#f472b6', '#fbbf24', '#38bdf8'][Math.floor(Math.random() * 5)],
+          })
+          setNewTag(''); onChange(); setSelected((s) => [...s, tag.id])
+        }}><Plus size={16} /> إضافة</button>
+      </div>
+      {error && <p className="mt-3 text-sm text-rose-300">{error}</p>}
     </Modal>
   )
 }

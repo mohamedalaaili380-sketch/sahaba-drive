@@ -41,6 +41,106 @@ export const routes = [
     },
   },
   {
+    method: 'POST', pattern: /^\/api\/items\/bulk$/,
+    handler({ req, res, body }) {
+      const user = requireUser(req)
+      const action = String(body.action || '')
+      const ids = [...new Set((Array.isArray(body.ids) ? body.ids : []).map((id) => String(id)).filter(Boolean))]
+      if (!ids.length) fail(400, 'اختار عنصر على الأقل')
+      if (ids.length > 200) fail(400, 'اختار 200 عنصر كحد أقصى')
+      const allowed = new Set(['trash', 'restore', 'delete', 'star', 'unstar', 'tag', 'untag', 'move'])
+      if (!allowed.has(action)) fail(400, 'إجراء غير معروف')
+
+      const entries = ids.map((id) => {
+        const { item } = itemAccess(user.id, id, 'editor', { includeDeleted: true })
+        assertAccess(user.id, item.space_id, 'editor')
+        return item
+      })
+      const active = entries.filter((i) => !i.deleted_at)
+      const activeIds = new Set(active.map((i) => i.id))
+      const t = now()
+      let count = 0
+
+      if (action === 'trash') {
+        for (const item of active) {
+          const tree = descendants(item.id)
+          run(`UPDATE items SET deleted_at = ?, updated_at = ? WHERE id IN (${tree.map(() => '?').join(',')})`, t, t, ...tree)
+          activity(user.id, item.id, 'item.trash', item.name)
+          broadcastChange(item.space_id, { type: 'trashed', ids: tree })
+          count += tree.length
+        }
+      } else if (action === 'restore') {
+        for (const item of entries.filter((i) => i.deleted_at)) {
+          const tree = descendants(item.id)
+          let parentId = item.parent_id
+          if (parentId && get('SELECT 1 FROM items WHERE id = ? AND deleted_at IS NOT NULL', parentId)) parentId = null
+          run(`UPDATE items SET deleted_at = NULL, updated_at = ? WHERE id IN (${tree.map(() => '?').join(',')})`, t, ...tree)
+          run('UPDATE items SET parent_id = ? WHERE id = ?', parentId, item.id)
+          activity(user.id, item.id, 'item.restore', item.name)
+          broadcastChange(item.space_id, { type: 'restored', ids: tree })
+          count += tree.length
+        }
+      } else if (action === 'delete') {
+        for (const item of entries.filter((i) => i.deleted_at)) {
+          const tree = descendants(item.id)
+          const blobs = all(`SELECT blob_path FROM versions WHERE item_id IN (${tree.map(() => '?').join(',')})`, ...tree)
+          run(`DELETE FROM items WHERE id IN (${tree.map(() => '?').join(',')})`, ...tree)
+          for (const b of blobs) {
+            if (!get('SELECT 1 FROM versions WHERE blob_path = ? LIMIT 1', b.blob_path)) deleteBlob(b.blob_path)
+          }
+          activity(user.id, item.id, 'item.delete', item.name)
+          broadcastChange(item.space_id, { type: 'deleted', ids: tree })
+          count += tree.length
+        }
+      } else if (action === 'star' || action === 'unstar') {
+        const value = action === 'star' ? 1 : 0
+        for (const item of active) {
+          run('UPDATE items SET starred = ?, updated_at = ? WHERE id = ?', value, t, item.id)
+          activity(user.id, item.id, action === 'star' ? 'item.star' : 'item.unstar', item.name)
+          broadcastChange(item.space_id, { type: 'updated', item: serializeItem(get('SELECT * FROM items WHERE id = ?', item.id)) })
+          count++
+        }
+      } else if (action === 'tag' || action === 'untag') {
+        const tagIds = [...new Set((Array.isArray(body.tagIds) ? body.tagIds : []).map((id) => String(id))
+          .filter((id) => get('SELECT id FROM tags WHERE id = ? AND user_id = ?', id, user.id)))]
+        if (!tagIds.length) fail(400, 'اختار وسم على الأقل')
+        for (const item of active) {
+          if (action === 'tag') {
+            for (const tag of tagIds) run('INSERT OR IGNORE INTO item_tags (item_id,tag_id) VALUES (?,?)', item.id, tag)
+          } else {
+            run(`DELETE FROM item_tags WHERE item_id = ? AND tag_id IN (${tagIds.map(() => '?').join(',')})`, item.id, ...tagIds)
+          }
+          broadcastChange(item.space_id, { type: 'updated', item: serializeItem(get('SELECT * FROM items WHERE id = ?', item.id)) })
+          count++
+        }
+      } else if (action === 'move') {
+        const target = body.parentId ? String(body.parentId) : null
+        const dest = target ? get('SELECT * FROM items WHERE id = ? AND deleted_at IS NULL', target) : null
+        if (target && (!dest || dest.kind !== 'folder')) fail(400, 'مجلد الوجهة غير صحيح')
+        if (dest) assertAccess(user.id, dest.space_id, 'editor')
+
+        for (const item of active) {
+          if (dest && item.space_id !== dest.space_id) fail(400, 'كل العناصر لازم تكون في نفس المساحة')
+          if (dest && descendants(item.id).includes(target)) fail(400, 'ما ينقلش المجلد جوه نفسه')
+          const space = dest ? dest.space_id : item.space_id
+          const taken = new Set(all('SELECT id,name FROM items WHERE parent_id IS ? AND space_id = ? AND deleted_at IS NULL', target, space)
+            .filter((row) => !activeIds.has(row.id)).map((row) => row.name))
+          if (taken.has(item.name)) fail(409, `فيه عنصر بنفس الاسم في الوجهة: ${item.name}`)
+        }
+        for (const item of active) {
+          run('UPDATE items SET parent_id = ?, updated_at = ? WHERE id = ?', target, t, item.id)
+          activity(user.id, item.id, 'item.move', target || 'الجذر')
+          broadcastChange(item.space_id, { type: 'updated', item: serializeItem(get('SELECT * FROM items WHERE id = ?', item.id)) })
+          count++
+        }
+      } else {
+        fail(400, 'إجراء غير معروف')
+      }
+
+      sendJson(res, 200, { ok: true, action, count })
+    },
+  },
+  {
     method: 'GET', pattern: /^\/api\/items$/,
     handler({ req, res, url }) {
       const user = requireUser(req)
