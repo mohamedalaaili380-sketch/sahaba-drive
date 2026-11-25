@@ -1,12 +1,11 @@
-import fs from 'node:fs'
 import crypto from 'node:crypto'
 import {
   now, newId, fail, requireUser, sendJson, assertAccess, spaceRole, itemAccess,
-  checkQuota, saveBlobStream, saveBlobBuffer, deleteBlob, streamBlob, getParentChain,
+  checkQuota, saveBlobStream, saveBlobBuffer, deleteBlob, copyBlob, streamBlob, getParentChain,
   activity, descendants, serializeItem, tagsForItem,
 } from '../util.mjs'
 import { all, get, run } from '../db.mjs'
-import { MAX_VERSIONS, BLOBS_DIR } from '../config.mjs'
+import { MAX_VERSIONS } from '../config.mjs'
 import { emit } from '../events.mjs'
 import { notifySpace } from './collab.mjs'
 
@@ -122,9 +121,10 @@ export const routes = [
       const existing = get(`SELECT * FROM items WHERE space_id = ? AND parent_id IS ? AND name = ? AND deleted_at IS NULL`, spaceId, parentId, name)
       if (existing?.kind === 'folder') fail(409, 'فيه مجلد بنفس الاسم هنا')
 
-      const blobId = newId()
-      const blobPath = await saveBlobStream(req, blobId)
-      const size = fs.statSync(blobPath).size
+      const localId = newId()
+      const saved = await saveBlobStream(req, localId, undefined, name)
+      const blobId = saved.id
+      const size = saved.size
       checkQuota(user.id, existing ? size - existing.size : size)
 
       let itemId
@@ -133,7 +133,7 @@ export const routes = [
         const version = existing.version + 1
         run(`INSERT INTO versions (id,item_id,number,size,blob_path,author_id,note,created_at) VALUES (?,?,?,?,?,?,?,?)`,
           newId(), itemId, version, size, blobId, user.id, 'رفع ملف جديد', now())
-        run('UPDATE items SET size = ?, mime = ?, version = ?, updated_at = ? WHERE id = ?', size, mime, version, now(), itemId)
+        run('UPDATE items SET size = ?, mime = ?, version = ?, blob_path = ?, updated_at = ? WHERE id = ?', size, mime, version, blobId, now(), itemId)
         const old = all('SELECT id,blob_path FROM versions WHERE item_id = ? AND number <= ? ORDER BY number DESC', itemId, version - MAX_VERSIONS)
         for (const v of old) {
           run('DELETE FROM versions WHERE id = ?', v.id)
@@ -163,13 +163,13 @@ export const routes = [
       const text = String(body.content ?? '')
       const buffer = Buffer.from(text, 'utf8')
       checkQuota(user.id, buffer.length - item.size)
-      const blobId = newId()
-      await saveBlobBuffer(buffer, blobId)
+      const saved = await saveBlobBuffer(buffer, newId(), item.name)
+      const blobId = saved.id
       const version = item.version + 1
       run('INSERT INTO versions (id,item_id,number,size,blob_path,author_id,note,created_at) VALUES (?,?,?,?,?,?,?,?)',
         newId(), item.id, version, buffer.length, blobId, user.id, String(body.note || 'تحرير داخل التطبيق'), now())
-      run('UPDATE items SET size = ?, version = ?, updated_at = ?, mime = ? WHERE id = ?',
-        buffer.length, version, now(), item.mime || 'text/plain', item.id)
+      run('UPDATE items SET size = ?, version = ?, blob_path = ?, updated_at = ?, mime = ? WHERE id = ?',
+        buffer.length, version, blobId, now(), item.mime || 'text/plain', item.id)
       const old = all('SELECT id,blob_path FROM versions WHERE item_id = ? AND number <= ? ORDER BY number DESC', item.id, version - MAX_VERSIONS)
       for (const v of old) { run('DELETE FROM versions WHERE id = ?', v.id); deleteBlob(v.blob_path) }
       activity(user.id, item.id, 'file.edit', `إصدار ${version}`)
@@ -181,7 +181,7 @@ export const routes = [
   },
   {
     method: 'GET', pattern: /^\/api\/items\/(?<id>[^/]+)\/content$/,
-    handler({ req, res, params, url }) {
+    async handler({ req, res, params, url }) {
       const user = requireUser(req)
       const { item } = itemAccess(user.id, params.id)
       if (item.kind !== 'file') fail(400, 'المجلدات مفيش محتوى مباشر')
@@ -193,7 +193,7 @@ export const routes = [
         blob = v.blob_path
       }
       const disposition = url.searchParams.get('inline') === '1' ? 'inline' : 'attachment'
-      streamBlob(res, blob, item.name, item.mime, disposition)
+      await streamBlob(res, blob, item.name, item.mime, disposition)
     },
   },
   {
@@ -332,13 +332,13 @@ export const routes = [
   },
   {
     method: 'POST', pattern: /^\/api\/items\/(?<id>[^/]+)\/versions\/(?<number>\d+)\/restore$/,
-    handler({ req, res, params }) {
+    async handler({ req, res, params }) {
       const user = requireUser(req)
       const { item } = itemAccess(user.id, params.id, 'editor')
       const version = get('SELECT * FROM versions WHERE item_id = ? AND number = ?', item.id, Number(params.number))
       if (!version) fail(404, 'الإصدار غير موجود')
-      const blobId = newId()
-      fs.copyFileSync(BLOBS_DIR + '/' + version.blob_path.split(/[\\/]/).pop(), BLOBS_DIR + '/' + blobId)
+      const saved = await copyBlob(version.blob_path, item.name)
+      const blobId = saved.id
       const number = item.version + 1
       run('INSERT INTO versions (id,item_id,number,size,blob_path,author_id,note,created_at) VALUES (?,?,?,?,?,?,?,?)',
         newId(), item.id, number, version.size, blobId, user.id, `استعادة الإصدار ${version.number}`, now())

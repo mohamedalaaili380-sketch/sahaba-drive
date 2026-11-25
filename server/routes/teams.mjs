@@ -99,6 +99,6 @@ export const routes = [
       JOIN spaces s ON s.id = i.space_id JOIN space_members m ON m.space_id = s.id
       WHERE m.user_id = ? AND s.owner_id != ? AND i.deleted_at IS NULL
       ORDER BY i.updated_at DESC`, user.id, user.id)
-    sendJson(res, 200, { items })
+    sendJson(res, 200, { items: items.map(({ blob_path, ...item }) => item) })
   } },
 ]

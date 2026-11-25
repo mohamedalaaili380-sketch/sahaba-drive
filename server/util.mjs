@@ -1,11 +1,8 @@
 import crypto from 'node:crypto'
-import fs from 'node:fs'
-import path from 'node:path'
-import { Transform } from 'node:stream'
-import { pipeline } from 'node:stream/promises'
-import { BLOBS_DIR, MAX_UPLOAD_BYTES } from './config.mjs'
 import { all, get, run } from './db.mjs'
 import { emit } from './events.mjs'
+
+export { saveBlobStream, saveBlobBuffer, deleteBlob, copyBlob, streamBlob } from './storage.mjs'
 
 export class HttpError extends Error {
   constructor(status, message) {
@@ -135,54 +132,6 @@ export function usedBytes(userId) {
   return get(`SELECT COALESCE(SUM(size),0) AS s FROM items WHERE owner_id = ? AND deleted_at IS NULL AND kind = 'file'`, userId).s
 }
 
-function blobPath(id) { return path.join(BLOBS_DIR, id) }
-
-export async function saveBlobStream(req, blobId, maxBytes = MAX_UPLOAD_BYTES) {
-  let received = 0
-  const counter = new Transform({
-    transform(chunk, _enc, cb) {
-      received += chunk.length
-      if (received > maxBytes) cb(new HttpError(413, 'الملف أكبر من الحد المسموح'))
-      else cb(null, chunk)
-    },
-  })
-  const finalPath = blobPath(blobId)
-  const tempPath = `${finalPath}.${crypto.randomBytes(4).toString('hex')}.tmp`
-  try {
-    await pipeline(req, counter, fs.createWriteStream(tempPath))
-    fs.renameSync(tempPath, finalPath)
-  } catch (err) {
-    fs.rmSync(tempPath, { force: true })
-    throw err
-  }
-  return finalPath
-}
-
-export async function saveBlobBuffer(buffer, blobId) {
-  fs.writeFileSync(blobPath(blobId), buffer)
-  return blobPath(blobId)
-}
-
-export function deleteBlob(blobId) {
-  if (!blobId) return
-  fs.rmSync(blobPath(blobId), { force: true })
-}
-
-export function streamBlob(res, blobId, filename, mime, disposition = 'attachment', size) {
-  const filePath = blobPath(blobId)
-  if (!fs.existsSync(filePath)) fail(404, 'الملف غير موجود على القرص')
-  const stat = fs.statSync(filePath)
-  res.writeHead(200, {
-    'content-type': mime || 'application/octet-stream',
-    'content-length': stat.size,
-    'content-disposition': `${disposition}; filename*=UTF-8''${encodeURIComponent(filename || 'file')}`,
-    'cache-control': 'private, no-store',
-    'x-content-type-options': 'nosniff',
-  })
-  fs.createReadStream(filePath).pipe(res)
-  if (size) return stat.size
-}
-
 export function activity(userId, itemId, action, detail = '') {
   const id = newId()
   run('INSERT INTO activity (id, user_id, item_id, action, detail, created_at) VALUES (?,?,?,?,?,?)',
@@ -223,8 +172,9 @@ export function tagsForItem(itemId) {
 }
 
 export function serializeItem(item) {
+  const { blob_path, ...safe } = item
   return {
-    ...item,
+    ...safe,
     starred: !!item.starred,
     tags: tagsForItem(item.id),
     comments_count: get('SELECT COUNT(*) AS c FROM comments WHERE item_id = ?', item.id).c,

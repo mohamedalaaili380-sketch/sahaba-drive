@@ -59,6 +59,25 @@ npm start          # http://localhost:4000 — يقدّم الواجهة وال�
 | `SAHABA_MAX_UPLOAD_MB` | `4096` | أقصى حجم ملف. |
 | `SAHABA_MAX_VERSIONS` | `50` | عدد الإصدارات المحتفظة بكل ملف. |
 | `SAHABA_STORAGE_LIMIT_MB` | `10240` | مساحة كل مستخدم. |
+| `SAHABA_STORAGE_MODE` | `local` / `drive` | يختار محتوى الملفات: قرص السيرفر أو Google Drive. |
+| `SAHABA_DRIVE_WEBAPP_URL` | — | رابط `/exec` لتطبيق Apps Script (وجوده يفعّل وضع Drive تلقائياً). |
+| `SAHABA_DRIVE_TOKEN` | — | التوكن السري المطابق للتوكن داخل `Code.gs`. |
+| `SAHABA_MAX_UPLOAD_MB` | `4096` / `20` في وضع Drive | أقصى حجم ملف مرفوع. |
+
+---
+
+## تخزين الملفات على Google Drive (Apps Script)
+
+البيانات الوصفية (المستخدمون، الإصدارات، التعليقات، الوسوم، المشاركات) تفضل في SQLite.
+محتوى الملفات بس بيتخزن في مجلدات `sahaba-drive-storage-*` داخل Google Drive عبر Apps Script Web App.
+
+1. افتح [Google Apps Script](https://script.google.com)، أنشئ مشروع و الصق محتوى `apps-script/Code.gs`.
+2. Deploy → New deployment → Web app: **Execute as Me** و **Who has access: Anyone**.
+3. ضع رابط `/exec` في `SAHABA_DRIVE_WEBAPP_URL` والتوكن في `SAHABA_DRIVE_TOKEN`، ثم أعد تشغيل السيرفر.
+4. جرّب: `curl "<WEBAPP_URL>?token=<TOKEN>&action=ping"` → لازم يرجع `{"ok":true,...}`.
+
+> التوكن سري؛ أي حد يعرفه يقدر يرفع/ينزّل/يمسح blobs في Drive. خزّنه كـ secret on the server فقط.
+> حد الرفع العملي في وضع Drive هو 20MB للملف (حد URL Fetch في Apps Script = 50MB، والـ base64 يكبّر الحجم ~33%).
 
 ---
 

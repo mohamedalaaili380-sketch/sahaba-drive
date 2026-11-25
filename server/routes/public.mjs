@@ -71,7 +71,7 @@ export const routes = [
     const items = all('SELECT id,parent_id,kind,name,mime,size,updated_at FROM items WHERE parent_id = ? AND deleted_at IS NULL ORDER BY kind DESC,name', parent)
     sendJson(res, 200, { items })
   } },
-  { method: 'GET', pattern: /^\/api\/public\/(?<token>[^/]+)\/content$/, handler({ req, res, params, url }) {
+  { method: 'GET', pattern: /^\/api\/public\/(?<token>[^/]+)\/content$/, async handler({ req, res, params, url }) {
     const { share, item } = loadShare(params.token, url.searchParams.get('grant'))
     let target = item
     const child = url.searchParams.get('child')
@@ -86,7 +86,7 @@ export const routes = [
     if (download && share.max_downloads && share.downloads >= share.max_downloads) fail(410, 'تم الوصول للحد الأقصى للتنزيلات')
     track(share.id, download ? 'download' : 'view', req)
     const mime = url.searchParams.get('inline') === '1' ? target.mime : 'application/octet-stream'
-    streamBlob(res, target.blob_path, target.name, mime, download ? 'attachment' : 'inline')
+    await streamBlob(res, target.blob_path, target.name, mime, download ? 'attachment' : 'inline')
   } },
   { method: 'GET', pattern: /^\/api\/public\/(?<token>[^/]+)\/comments$/, handler({ req, res, params, url }) {
     const { share, item } = loadShare(params.token, url.searchParams.get('grant'))
