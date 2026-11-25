@@ -73,6 +73,21 @@ const server = http.createServer(async (req, res) => {
 
 setupWebsocket(server)
 
+if (process.env.SAHABA_DRIVE_MIGRATE_FROM_URL) {
+  try {
+    const { migrateBlobs } = await import('./migrate.mjs')
+    const result = await migrateBlobs({
+      fromUrl: process.env.SAHABA_DRIVE_MIGRATE_FROM_URL,
+      fromToken: process.env.SAHABA_DRIVE_MIGRATE_FROM_TOKEN || '',
+    })
+    console.log(`☁️  تم نقل ${result.count} ملف إلى Drive الجديد`)
+  } catch (err) {
+    console.error('فشل نقل الملفات إلى Drive الجديد:', err)
+    process.exitCode = 1
+    throw err
+  }
+}
+
 server.listen(PORT, HOST, () => {
   console.log(`☁️  سَحابة API جاهز على http://${HOST}:${PORT}`)
 })
