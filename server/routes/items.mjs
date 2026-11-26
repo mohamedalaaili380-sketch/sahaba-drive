@@ -1,6 +1,6 @@
 import crypto from 'node:crypto'
 import {
-  now, newId, fail, requireUser, sendJson, assertAccess, spaceRole, itemAccess,
+  now, newId, fail, requireUser, sendJson, assertAccess, resolveWriteSpace, spaceRole, itemAccess,
   checkQuota, saveBlobStream, saveBlobBuffer, deleteBlob, copyBlob, streamBlob, getParentChain,
   activity, descendants, serializeItem, tagsForItem,
 } from '../util.mjs'
@@ -187,8 +187,10 @@ export const routes = [
   {
     method: 'POST', pattern: /^\/api\/items$/, async handler({ req, res, body }) {
       const user = requireUser(req)
-      const spaceId = String(body.spaceId || '')
-      const parentId = body.parentId ? String(body.parentId) : null
+      const requestedSpace = String(body.spaceId || '')
+      const spaceId = resolveWriteSpace(user.id, requestedSpace)
+      let parentId = body.parentId ? String(body.parentId) : null
+      if (parentId && spaceId !== requestedSpace) parentId = null
       assertAccess(user.id, spaceId, 'editor')
       const name = cleanName(body.name)
       if (parentId) {
@@ -208,8 +210,10 @@ export const routes = [
   {
     method: 'POST', pattern: /^\/api\/upload$/, rawBody: true, async handler({ req, res, url }) {
       const user = requireUser(req)
-      const spaceId = url.searchParams.get('space') || ''
-      const parentId = url.searchParams.get('parent') || null
+      const requestedSpace = url.searchParams.get('space') || ''
+      const spaceId = resolveWriteSpace(user.id, requestedSpace)
+      let parentId = url.searchParams.get('parent') || null
+      if (parentId && spaceId !== requestedSpace) parentId = null
       assertAccess(user.id, spaceId, 'editor')
       let name = cleanName(url.searchParams.get('name'))
       const mime = url.searchParams.get('mime') || 'application/octet-stream'

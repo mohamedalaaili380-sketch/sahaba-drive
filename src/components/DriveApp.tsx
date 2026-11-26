@@ -61,6 +61,11 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
   const [query, setQuery] = useState('')
   const [online, setOnline] = useState<{ id: string; name: string }[]>([])
   const [realtime, setRealtime] = useState<'connecting' | 'live' | 'offline'>('connecting')
+  const readOnlySpace = () => {
+    const current = spaces.find((s) => s.id === spaceId)
+    return !!current && !user.isAdmin && current.role === 'viewer'
+  }
+  const readOnlyMessage = () => t('You have view-only access to this space. Switch to My Drive to add files.', 'عندك صلاحية مشاهدة بس في المساحة دي. روح لدرايفك عشان تضيف ملفات.')
   const ws = useRef<WebSocket | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
   const toastId = useRef(0)
@@ -81,7 +86,10 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
         get<{ spaces: Space[] }>('/spaces'), get<{ tags: Tag[] }>('/tags'), get<{ notifications: AppNotification[] }>('/notifications'),
       ])
       setSpaces(s.spaces); setTags(tagsData.tags); setNotifications(n.notifications)
-      setSpaceId((current) => current || s.spaces.find((x) => x.kind === 'personal')?.id || s.spaces[0]?.id || '')
+      setSpaceId((current) => {
+        if (s.spaces.some((space) => space.id === current)) return current
+        return s.spaces.find((x) => x.kind === 'personal')?.id || s.spaces[0]?.id || ''
+      })
     } catch (e: any) { notify(e.message, 'err') }
   }, [notify])
 
@@ -249,6 +257,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
   async function upload(files: FileList | File[]) {
     const list = Array.from(files)
     if (!list.length) return
+    if (readOnlySpace()) return notify(readOnlyMessage(), 'err')
     const target = { space: spaceId, parent: view === 'drive' ? folderId : null }
     for (const file of list) {
       setUploads((current) => [...current, { name: file.name, pct: 0 }])
@@ -263,6 +272,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
 
   function menuAction(action: string, item: Item) {
     setCtx(null)
+    if (['rename', 'share', 'versions', 'tags', 'move', 'copy', 'star', 'trash', 'restore', 'delete'].includes(action) && readOnlySpace()) return notify(readOnlyMessage(), 'err')
     if (action === 'open') openItem(item)
     else if (action === 'download') window.location.href = `/api/items/${item.id}/content`
     else if (action === 'rename') setDialog({ type: 'rename', item })
@@ -279,6 +289,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
 
   async function runBulk(action: string, extra: Record<string, unknown> = {}, done?: (count: number) => string) {
     if (!selected.length || bulkBusy) return
+    if (readOnlySpace()) return notify(readOnlyMessage(), 'err')
     setBulkBusy(true)
     try {
       const result = await post<{ count: number }>('/items/bulk', { action, ids: selected, ...extra })
@@ -334,6 +345,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
           : view === 'tag' ? t('Tag: {name}', 'وسم: {name}', { name: tags.find((tag) => tag.id === tagFilter)?.name || '' })
             : t('Search results', 'نتائج البحث')
   const unread = notifications.filter((n) => !n.read).length
+  const readOnly = readOnlySpace()
   const statusLabel = realtime === 'live' ? t('Live', 'متصل')
     : realtime === 'connecting' ? t('Connecting…', 'جاري الاتصال...')
       : t('Offline · retrying', 'غير متصل · إعادة المحاولة')
@@ -354,8 +366,8 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
           <button className="ms-auto text-[#8f9bc2] lg:hidden" onClick={() => setSidebar(false)}><X size={18} /></button>
         </div>
 
-        <button className="btn btn-primary mx-4 py-3" onClick={() => fileInput.current?.click()}><Upload size={17} /> {t('Upload files', 'رفع ملفات')}</button>
-        <button className="btn btn-ghost mx-4 mt-2 py-2.5" onClick={() => setDialog({ type: 'folder' })}><FolderPlus size={17} /> {t('New folder', 'مجلد جديد')}</button>
+        <button className="btn btn-primary mx-4 py-3" disabled={readOnly} title={readOnly ? readOnlyMessage() : undefined} onClick={() => fileInput.current?.click()}><Upload size={17} /> {t('Upload files', 'رفع ملفات')}</button>
+        <button className="btn btn-ghost mx-4 mt-2 py-2.5" disabled={readOnly} title={readOnly ? readOnlyMessage() : undefined} onClick={() => setDialog({ type: 'folder' })}><FolderPlus size={17} /> {t('New folder', 'مجلد جديد')}</button>
 
         <nav className="scroll-thin mt-5 flex-1 space-y-1 overflow-auto px-3">
           <p className="sahaba-section-title px-3 pb-1 text-[10px] font-bold">{t('Spaces', 'المساحات')}</p>
@@ -428,12 +440,12 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
           <div className="min-w-0">
             <p className="sahaba-eyebrow">{t('Workspace', 'مساحة العمل')}</p>
             <h2 id="sahaba-view-title" className="sahaba-hero-title">{view === 'drive' ? (trail.at(-1)?.name || displaySpace(spaceName) || t('My Drive', 'درايفك')) : title}</h2>
-            <p className="sahaba-hero-sub">{t('Everything you keep, organized and ready to share.', 'كل ملفاتك منظمة وجاهزة للمشاركة.')}</p>
+            <p className="sahaba-hero-sub">{readOnly ? readOnlyMessage() : t('Everything you keep, organized and ready to share.', 'كل ملفاتك منظمة وجاهزة للمشاركة.')}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="sahaba-hero-status flex items-center gap-2" title={statusLabel}><i className={`sahaba-live ${realtime === 'live' ? 'on' : ''}`} aria-hidden="true" />{statusLabel}</span>
-            <button className="btn btn-ghost px-3 py-2 !text-xs" onClick={() => setDialog({ type: 'folder' })}><FolderPlus size={15} /> {t('New folder', 'مجلد جديد')}</button>
-            <button className="btn btn-primary sahaba-hero-cta" onClick={() => fileInput.current?.click()}><Upload size={17} /> {t('Upload files', 'رفع ملفات')}</button>
+            <button className="btn btn-ghost px-3 py-2 !text-xs" disabled={readOnly} title={readOnly ? readOnlyMessage() : undefined} onClick={() => setDialog({ type: 'folder' })}><FolderPlus size={15} /> {t('New folder', 'مجلد جديد')}</button>
+            <button className="btn btn-primary sahaba-hero-cta" disabled={readOnly} title={readOnly ? readOnlyMessage() : undefined} onClick={() => fileInput.current?.click()}><Upload size={17} /> {t('Upload files', 'رفع ملفات')}</button>
           </div>
         </section>
 
@@ -580,12 +592,12 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
             <p className="text-xs font-bold text-[#9aa6ce]">{t('Tags', 'الوسوم')}</p>
             <div className="flex flex-wrap gap-2">
               {detail.tags.map((tag) => <span key={tag.id} className="rounded-full px-2.5 py-1 text-[11px]" style={{ background: `${tag.color}25`, color: tag.color }}>{tag.name}</span>)}
-              <button className="rounded-full border border-dashed border-white/20 px-2.5 py-1 text-[11px] text-[#8f9bc2] hover:text-white" onClick={() => setDialog({ type: 'tags', item: detail })}><Plus size={11} className="inline" /> {t('Tag', 'وسم')}</button>
+              <button className="rounded-full border border-dashed border-white/20 px-2.5 py-1 text-[11px] text-[#8f9bc2] hover:text-white" disabled={readOnly} title={readOnly ? readOnlyMessage() : undefined} onClick={() => setDialog({ type: 'tags', item: detail })}><Plus size={11} className="inline" /> {t('Tag', 'وسم')}</button>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 border-t border-white/10 p-4">
-            <button className="btn btn-ghost !text-xs" onClick={() => setDialog({ type: 'share', item: detail })}><Share2 size={14} /> {t('Share', 'مشاركة')}</button>
-            <button className="btn btn-ghost !text-xs" onClick={() => setDialog({ type: 'versions', item: detail })}><History size={14} /> {t('Versions', 'إصدارات')}</button>
+            <button className="btn btn-ghost !text-xs" disabled={readOnly} title={readOnly ? readOnlyMessage() : undefined} onClick={() => setDialog({ type: 'share', item: detail })}><Share2 size={14} /> {t('Share', 'مشاركة')}</button>
+            <button className="btn btn-ghost !text-xs" disabled={readOnly} title={readOnly ? readOnlyMessage() : undefined} onClick={() => setDialog({ type: 'versions', item: detail })}><History size={14} /> {t('Versions', 'إصدارات')}</button>
             {detail.kind === 'file' && <button className="btn btn-ghost !text-xs" onClick={() => setPreview(detail)}><Info size={14} /> {t('Preview', 'معاينة')}</button>}
             <button className="btn btn-ghost !text-xs" onClick={() => setShowComments(!showComments)}><MessageSquare size={14} /> {t('Comments ({n})', 'تعليقات ({n})', { n: detail.comments_count })}</button>
           </div>

@@ -121,6 +121,17 @@ export function assertAccess(userId, spaceId, min = 'viewer') {
   return role
 }
 
+// A stale/empty space id (e.g. after a space was deleted) should fall back to
+// the user's own drive instead of failing with a confusing permission error.
+export function resolveWriteSpace(userId, requestedId) {
+  const requested = String(requestedId || '')
+  if (requested && get('SELECT id FROM spaces WHERE id = ?', requested)) return requested
+  const personal = get('SELECT id FROM spaces WHERE owner_id = ? AND kind = ?', userId, 'personal')
+  if (personal) return personal.id
+  const owned = get('SELECT id FROM spaces WHERE owner_id = ? ORDER BY created_at LIMIT 1', userId)
+  return owned?.id || requested
+}
+
 export function getItem(itemId, { includeDeleted = false } = {}) {
   return get(`SELECT * FROM items WHERE id = ? ${includeDeleted ? '' : 'AND deleted_at IS NULL'}`, itemId) || fail(404, 'الملف غير موجود')
 }
