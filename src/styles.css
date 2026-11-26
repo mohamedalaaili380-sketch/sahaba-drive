@@ -20,7 +20,7 @@
 
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
-body { overflow: hidden; }
+body { overflow: hidden; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 
 ::selection { background: #7c6cff55; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -230,3 +230,64 @@ a { color: #6d5fe0; }
     #080c18 !important;
 }
 .sahaba-public .gradient-text { color: #fff; -webkit-text-fill-color: #fff; }
+
+/* ---------- Sahaba — professional polish ---------- */
+.sahaba-side {
+  background:
+    radial-gradient(420px 260px at 0% 0%, rgba(124,108,255,.24), transparent 68%),
+    radial-gradient(360px 300px at 100% 100%, rgba(53,214,208,.12), transparent 70%),
+    linear-gradient(180deg,#0d1430 0%,#0a1026 100%) !important;
+}
+.sahaba-sidebar-brand { border-bottom: 1px solid rgba(255,255,255,.06); margin-bottom: .25rem; }
+.sahaba-brand-mark { box-shadow: 0 10px 24px rgba(105,92,230,.35), inset 0 1px 0 rgba(255,255,255,.28) !important; }
+.sahaba-side .sahaba-section-title { text-transform: uppercase; font-size: 10px; }
+.sahaba-side .sahaba-nav { font-weight: 500; }
+.sahaba-side .sahaba-nav.active { box-shadow: inset 2px 0 0 #8d7dff, 0 6px 18px rgba(5,8,20,.18) !important; }
+.sahaba-side .sahaba-nav:hover:not(.active) { background: rgba(255,255,255,.055) !important; }
+
+.sahaba-main .sahaba-topbar { box-shadow: 0 1px 2px rgba(16,24,40,.03); }
+.sahaba-main .sahaba-search { transition: border-color .15s, box-shadow .15s, background .15s !important; }
+.sahaba-main .sahaba-search:focus-within { border-color: #8d7dff !important; box-shadow: 0 0 0 3px rgba(124,108,255,.12), 0 4px 14px rgba(30,45,90,.05) !important; background: #fff !important; }
+
+.sahaba-hero { background: linear-gradient(180deg,#fff 0%,#fbfcff 100%); }
+.sahaba-hero-title { font-size: 30px; letter-spacing: -.035em; color: #141a30; }
+.sahaba-hero-sub { font-size: 13px; color: #66708f; }
+.sahaba-hero-status { display: inline-flex; align-items: center; gap: .5rem; border: 1px solid #e4e8f2; background: #fff; border-radius: 999px; padding: .35rem .7rem; box-shadow: 0 2px 8px rgba(30,45,90,.03); }
+.sahaba-eyebrow { color: #6d5fe0; }
+
+.sahaba-main .sahaba-toolbar { background: #fff !important; }
+.sahaba-selection { border-color: #dcd7ff !important; background: #f4f2ff !important; color: #5b4bd6 !important; }
+.sahaba-selection button { color: #4a5576 !important; }
+.sahaba-selection button:hover { background: #e9e7ff !important; }
+.sahaba-selection .sahaba-selection-divider { background: #d9dcef !important; }
+.sahaba-main .sahaba-toolbar button.sahaba-danger { color: #e11d48 !important; }
+.sahaba-crumb.active { color: #5b4bd6; }
+
+.sahaba-main .sahaba-canvas {
+  background:
+    radial-gradient(720px 260px at 88% -12%, rgba(124,108,255,.07), transparent 62%),
+    radial-gradient(520px 240px at 4% 8%, rgba(53,214,208,.055), transparent 60%),
+    #f5f7fc !important;
+}
+
+.sahaba-banner { position: relative; overflow: hidden; border-radius: 18px !important; }
+.sahaba-banner::after { content: ""; position: absolute; inset: 0; background: radial-gradient(420px 160px at 100% 0%, rgba(255,255,255,.18), transparent 65%); pointer-events: none; }
+.sahaba-banner > * { position: relative; z-index: 1; }
+.sahaba-banner-icon { box-shadow: inset 0 1px 0 rgba(255,255,255,.22) !important; }
+
+.sahaba-main .sahaba-file { border-radius: 18px !important; padding: 18px !important; box-shadow: 0 1px 2px rgba(16,24,40,.02), 0 10px 24px rgba(34,45,85,.045) !important; }
+.sahaba-main .sahaba-file:hover { border-color: #bfb7ff !important; box-shadow: 0 16px 34px rgba(34,45,85,.1) !important; }
+.sahaba-main .sahaba-file p.truncate { font-size: 13px; letter-spacing: -.01em; }
+.sahaba-main .sahaba-thumb { width: 68px; height: 68px; border-radius: 16px !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 8px 18px rgba(80,80,180,.16) !important; }
+
+.sahaba-main .sahaba-list { box-shadow: 0 8px 24px rgba(34,45,85,.04) !important; }
+.sahaba-list-row[aria-pressed="true"] { background: #f1efff !important; }
+.sahaba-main .sahaba-list-row:hover { background: #f8f9fd !important; }
+.sahaba-main .sahaba-list-row button:hover { background: #eef0f8 !important; }
+
+.sahaba-main .sahaba-uploads { color: #4a5576 !important; }
+.sahaba-main .sahaba-uploads svg { color: #6d5fe0 !important; }
+.sahaba-main .sahaba-uploads span { color: #5f6b8a !important; }
+
+.btn-primary { box-shadow: 0 8px 20px rgba(91,75,214,.26), inset 0 1px 0 rgba(255,255,255,.25) !important; }
+.sahaba-main .btn-ghost:hover:not(:disabled) { border-color: #cfd5e6 !important; }

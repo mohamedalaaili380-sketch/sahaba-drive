@@ -372,8 +372,8 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
       {sidebar && <div className="fixed inset-0 z-30 bg-black/60 lg:hidden" onClick={() => setSidebar(false)} />}
 
       <aside className={`sahaba-side fixed inset-y-0 end-0 z-40 flex w-72 flex-col border-s border-white/10 bg-[#0c1224] transition-transform lg:static lg:z-auto lg:translate-x-0 ${sidebar ? 'translate-x-0' : 'translate-x-full'}`}>
-        <div className="flex items-center gap-3 px-5 py-5">
-          <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-[#7c6cff] via-[#5b8cff] to-[#35d6d0] shadow-lg shadow-[#6d7cff]/25"><Cloud size={21} /></div>
+        <div className="sahaba-sidebar-brand flex items-center gap-3 px-5 py-5">
+          <div className="sahaba-brand-mark grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-[#7c6cff] via-[#5b8cff] to-[#35d6d0] shadow-lg shadow-[#6d7cff]/25"><Cloud size={21} /></div>
           <div><h1 className="text-xl font-black tracking-tight text-white">Sahaba</h1><p className="side-sub text-[10px]">{t('Your drive', 'درايفك المحلي')}</p></div>
           <button className="ms-auto text-[#8f9bc2] lg:hidden" onClick={() => setSidebar(false)}><X size={18} /></button>
         </div>
@@ -472,11 +472,11 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
             </span>
           ))}
           <span className="sahaba-pill rounded-full px-2.5 py-1 text-[11px]">{t('{n} items', '{n} عنصر', { n: items.length })}</span>
-          {selected.length > 0 && <div className="flex flex-wrap items-center gap-1 rounded-xl border border-[#6d7cff]/40 bg-[#6d7cff12] px-2 py-1">
+          {selected.length > 0 && <div className="sahaba-selection flex flex-wrap items-center gap-1 rounded-xl border border-[#6d7cff]/40 bg-[#6d7cff12] px-2 py-1">
             <span className="px-1 text-[11px] font-bold text-[#aab6ff]">{t('{n} selected', '{n} محدد', { n: selected.length })}</span>
             <button disabled={bulkBusy} className="rounded-lg px-2 py-1 text-[11px] text-[#9aa6ce] hover:bg-white/10 disabled:opacity-40"
               onClick={() => setSelected(allSelected ? [] : items.map((i) => i.id))}>{allSelected ? t('Clear all', 'إلغاء الكل') : t('Select all', 'تحديد الكل')}</button>
-            <span className="mx-1 h-4 w-px bg-white/10" />
+            <span className="sahaba-selection-divider mx-1 h-4 w-px bg-white/10" />
             {bulkBusy ? <span className="px-2 text-[11px] text-[#9aa9ff]">{t('Working…', 'جاري التنفيذ...')}</span> : view === 'trash' ? <>
               <button className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-[#b8c4e8] hover:bg-white/10" onClick={() => runBulk('restore', {}, (n) => t('{n} items restored', 'تمت استعادة {n} عنصر', { n }))}><RefreshCw size={13} /> {t('Restore', 'استعادة')}</button>
               <button className="sahaba-danger flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-rose-300 hover:bg-white/10" onClick={() => runBulk('delete', {}, (n) => t('{n} items permanently deleted', 'تم حذف {n} عنصر نهائياً', { n }))}><Trash2 size={13} /> {t('Delete permanently', 'حذف نهائي')}</button>
