@@ -9,19 +9,19 @@ export function Modal({ title, subtitle, onClose, children, wide = false, footer
   return (
     <div className="modal-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div className={`modal ${wide ? 'wide' : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId}>
-        <div className="modal-header sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-white/10 bg-[#131b32]/95 px-6 py-4 backdrop-blur">
-          <div className="min-w-0"><h3 id={titleId} className="text-lg font-bold">{title}</h3>{subtitle && <p className="mt-1 text-xs text-[#aab6d8]">{subtitle}</p>}</div>
-          <button type="button" onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-[#aab6d8] transition hover:bg-white/10 hover:text-white"><X size={19} /></button>
+        <div className="modal-header sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-white/10 bg-[#07343b]/95 px-6 py-4 backdrop-blur">
+          <div className="min-w-0"><h3 id={titleId} className="text-lg font-bold">{title}</h3>{subtitle && <p className="mt-1 text-xs text-[#9ecac7]">{subtitle}</p>}</div>
+          <button type="button" onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-[#9ecac7] transition hover:bg-white/10 hover:text-white"><X size={19} /></button>
         </div>
         <div className="modal-body px-6 py-5">{children}</div>
-        {footer && <div className="modal-footer sticky bottom-0 flex justify-end gap-2 border-t border-white/10 bg-[#0e1529]/95 px-6 py-4 backdrop-blur">{footer}</div>}
+        {footer && <div className="modal-footer sticky bottom-0 flex justify-end gap-2 border-t border-white/10 bg-[#052a31]/95 px-6 py-4 backdrop-blur">{footer}</div>}
       </div>
     </div>
   )
 }
 
 export function Spinner({ label }: { label?: string }) {
-  return <div className="sahaba-skeleton-wrap flex flex-col items-center gap-3 py-16 text-[#5f6b8a]"><Loader2 className="spin" size={28} />{label && <span className="text-sm">{label}</span>}</div>
+  return <div className="sahaba-skeleton-wrap flex flex-col items-center gap-3 py-16 text-[#5b7e80]"><Loader2 className="spin" size={28} />{label && <span className="text-sm">{label}</span>}</div>
 }
 
 export function SkeletonGrid({ count = 8 }: { count?: number }) {
@@ -44,8 +44,8 @@ export function Empty({ icon: Icon, title, hint, action }: { icon: any; title: s
 }
 
 const colors: Record<string, string> = {
-  image: '#f472b6', video: '#f87171', audio: '#fbbf24', archive: '#a78bfa',
-  code: '#34d399', sheet: '#4ade80', pdf: '#fb7185', text: '#60a5fa', doc: '#818cf8',
+  image: '#f472b6', video: '#f87171', audio: '#fbbf24', archive: '#5eead4',
+  code: '#34d399', sheet: '#4ade80', pdf: '#fb7185', text: '#67e8f9', doc: '#22d3ee',
 }
 
 export function ItemIcon({ item, size = 34, open = false }: { item: { kind: string; name: string; mime: string }; size?: number; open?: boolean }) {
@@ -70,7 +70,7 @@ export function ItemIcon({ item, size = 34, open = false }: { item: { kind: stri
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <Icon size={size} style={{ color: colors[type] }} strokeWidth={1.5} />
-      {ext && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded bg-[#0d1324] px-0.5 text-[7px] font-bold" style={{ color: colors[type] }}>{ext.slice(0, 4)}</span>}
+      {ext && <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded bg-[#062f36] px-0.5 text-[7px] font-bold" style={{ color: colors[type] }}>{ext.slice(0, 4)}</span>}
     </div>
   )
 }

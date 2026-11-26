@@ -64,20 +64,20 @@ export default function AdminPanel({ currentUser, onClose, notify, onUsersChange
       onClose={onClose}>
 
       <div className="mb-4 flex gap-2 border-b border-white/10 pb-3">
-        <button onClick={() => setTab('users')} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${tab === 'users' ? 'bg-[#6d7cff33] text-white' : 'text-[#9aa6ce] hover:bg-white/5'}`}>
+        <button onClick={() => setTab('users')} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${tab === 'users' ? 'bg-[#14b8a633] text-white' : 'text-[#86b8b5] hover:bg-white/5'}`}>
           <Users size={16} /> {t('Users', 'المستخدمون')} <span className="rounded-full bg-white/10 px-1.5 text-[10px]">{users.length}</span>
         </button>
-        <button onClick={() => setTab('spaces')} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${tab === 'spaces' ? 'bg-[#6d7cff33] text-white' : 'text-[#9aa6ce] hover:bg-white/5'}`}>
+        <button onClick={() => setTab('spaces')} className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${tab === 'spaces' ? 'bg-[#14b8a633] text-white' : 'text-[#86b8b5] hover:bg-white/5'}`}>
           <Folder size={16} /> {t('Spaces', 'المساحات')} <span className="rounded-full bg-white/10 px-1.5 text-[10px]">{spaces.length}</span>
         </button>
-        <button disabled={busy} onClick={load} className="ms-auto rounded-xl p-2 text-[#8f9bc2] hover:bg-white/10 disabled:opacity-40" title={t('Refresh', 'تحديث')}><RefreshCw size={16} className={busy ? 'spin' : ''} /></button>
+        <button disabled={busy} onClick={load} className="ms-auto rounded-xl p-2 text-[#86b8b5] hover:bg-white/10 disabled:opacity-40" title={t('Refresh', 'تحديث')}><RefreshCw size={16} className={busy ? 'spin' : ''} /></button>
       </div>
 
       {error && <div className="mb-3 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">{error}</div>}
 
       {tab === 'users' ? <>
         <label className="relative mb-3 block">
-          <Search className="absolute start-3 top-2.5 text-[#6d789f]" size={16} />
+          <Search className="absolute start-3 top-2.5 text-[#6f9d9b]" size={16} />
           <input className="field ps-9" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('Search users…', 'ابحث عن مستخدم...')} />
         </label>
         <div className="scroll-thin max-h-[52vh] space-y-2 overflow-auto">
@@ -91,13 +91,13 @@ export default function AdminPanel({ currentUser, onClose, notify, onUsersChange
                     {u.isSuperAdmin && <span className="flex items-center gap-1 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200"><ShieldCheck size={10} /> {t('Main admin', 'الأدمن الرئيسي')}</span>}
                     {u.isAdmin && !u.isSuperAdmin && <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] text-amber-300"><ShieldCheck size={10} /> {t('Admin', 'مدير')}</span>}
                     {!u.approved && <span className="flex items-center gap-1 rounded-full bg-sky-500/15 px-2 py-0.5 text-[10px] text-sky-300"><Check size={10} /> {t('Pending', 'في انتظار الموافقة')}</span>}
-                    {u.id === currentUser.id && <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-[#9aa6ce]">{t('You', 'أنت')}</span>}
+                    {u.id === currentUser.id && <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-[#86b8b5]">{t('You', 'أنت')}</span>}
                   </div>
-                  <p className="truncate text-[11px] text-[#8591ba]" dir="ltr">{u.email}</p>
-                  <p className="mt-1 text-[10px] text-[#727ea6]">{t('Joined {date}', 'انضم في {date}', { date: formatDate(u.createdAt) })} · {t('{n} files', '{n} ملف', { n: number(u.items) })} · {t('{n} spaces', '{n} مساحة', { n: number(u.spaces) })}</p>
+                  <p className="truncate text-[11px] text-[#78aaa8]" dir="ltr">{u.email}</p>
+                  <p className="mt-1 text-[10px] text-[#6f9d9b]">{t('Joined {date}', 'انضم في {date}', { date: formatDate(u.createdAt) })} · {t('{n} files', '{n} ملف', { n: number(u.items) })} · {t('{n} spaces', '{n} مساحة', { n: number(u.spaces) })}</p>
                 </div>
                 <div className="hidden w-32 sm:block">
-                  <p className="mb-1 text-[10px] text-[#8f9bc2]">{formatBytes(u.used)} / {formatBytes(u.storageLimit)}</p>
+                  <p className="mb-1 text-[10px] text-[#86b8b5]">{formatBytes(u.used)} / {formatBytes(u.storageLimit)}</p>
                   <Progress value={Math.min(100, Math.round((u.used / u.storageLimit) * 100))} />
                 </div>
               </div>
@@ -150,19 +150,19 @@ export default function AdminPanel({ currentUser, onClose, notify, onUsersChange
               </div>
             </div>
           ))}
-          {filtered.length === 0 && <p className="py-10 text-center text-sm text-[#7f8bb4]">{t('No users found.', 'مفيش مستخدمين.')}</p>}
+          {filtered.length === 0 && <p className="py-10 text-center text-sm text-[#78aaa8]">{t('No users found.', 'مفيش مستخدمين.')}</p>}
         </div>
       </> : <>
         <div className="scroll-thin max-h-[56vh] space-y-2 overflow-auto">
           {spaces.map((s) => (
             <div key={s.id} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[.035] p-3">
-              <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#6d7cff22] text-[#a9b6ff]">
+              <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#14b8a622] text-[#8be9e2]">
                 {s.kind === 'personal' ? <Folder size={18} /> : <FolderOpen size={18} />}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2"><p className="truncate text-sm font-bold">{s.name}</p>
-                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-[#9aa6ce]">{s.kind === 'personal' ? t('Personal', 'شخصية') : t('Department', 'إدارة')}</span></div>
-                <p className="truncate text-[11px] text-[#8591ba]">{s.owner?.name || '—'} · {t('{n} members', '{n} أعضاء', { n: number(s.members) })} · {t('{n} files', '{n} ملف', { n: number(s.files) })} · {formatBytes(s.size)}</p>
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-[#86b8b5]">{s.kind === 'personal' ? t('Personal', 'شخصية') : t('Department', 'إدارة')}</span></div>
+                <p className="truncate text-[11px] text-[#78aaa8]">{s.owner?.name || '—'} · {t('{n} members', '{n} أعضاء', { n: number(s.members) })} · {t('{n} files', '{n} ملف', { n: number(s.files) })} · {formatBytes(s.size)}</p>
               </div>
               {confirmDelete === s.id
                 ? <button className="btn btn-danger px-2 py-1 !text-[11px]" disabled={busy} onClick={() => { run(async () => { await del(`/admin/spaces/${s.id}`) }, t('Space deleted', 'تم حذف المساحة')); setConfirmDelete('') }}>
@@ -171,7 +171,7 @@ export default function AdminPanel({ currentUser, onClose, notify, onUsersChange
                 : <button className="btn btn-ghost px-2 py-1 !text-[11px] text-rose-300" disabled={busy} onClick={() => setConfirmDelete(s.id)}><Trash2 size={13} /> {t('Delete', 'حذف')}</button>}
             </div>
           ))}
-          {spaces.length === 0 && <p className="py-10 text-center text-sm text-[#7f8bb4]">{t('No spaces found.', 'مفيش مساحات.')}</p>}
+          {spaces.length === 0 && <p className="py-10 text-center text-sm text-[#78aaa8]">{t('No spaces found.', 'مفيش مساحات.')}</p>}
         </div>
       </>}
     </Modal>

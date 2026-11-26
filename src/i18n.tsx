@@ -65,8 +65,8 @@ export function LangToggle({ floating = false }: { floating?: boolean }) {
       title={t('Switch to Arabic', 'التبديل للعربية')}
       onClick={toggleLang}
       className={floating
-        ? 'fixed bottom-4 end-4 z-50 flex items-center gap-1.5 rounded-full border border-white/15 bg-[#131b32]/95 px-3 py-2 text-xs font-bold text-[#cbd5f5] shadow-xl backdrop-blur transition hover:border-[#6d7cff] hover:text-white'
-        : 'flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-xs font-bold text-[#a4b0d6] transition hover:bg-white/10 hover:text-white'}
+        ? 'fixed bottom-4 end-4 z-50 flex items-center gap-1.5 rounded-full border border-white/15 bg-[#07343b]/95 px-3 py-2 text-xs font-bold text-[#bfe9e6] shadow-xl backdrop-blur transition hover:border-[#14b8a6] hover:text-white'
+        : 'flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-xs font-bold text-[#86b8b5] transition hover:bg-white/10 hover:text-white'}
     >
       <Languages size={16} />
       <span>{lang === 'en' ? 'EN' : 'ع'}</span>

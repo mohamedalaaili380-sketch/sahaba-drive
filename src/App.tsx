@@ -23,7 +23,7 @@ export default function App() {
 
   const content = shareMatch ? <PublicShare token={decodeURIComponent(shareMatch[1])} />
     : checking ? (
-      <div className="grid h-full place-items-center bg-[#080c18] text-[#9aa9ff]">
+      <div className="grid h-full place-items-center bg-[#03252c] text-[#5eead4]">
         <div className="flex flex-col items-center gap-4"><Cloud size={42} className="animate-pulse" /><Loader2 className="spin" size={17} /></div>
       </div>
     )
