@@ -79,14 +79,22 @@ export function authUser(req) {
 export function requireUser(req) {
   const user = authUser(req)
   if (!user) fail(401, 'سجّل الدخول أولاً')
+  if (!user.approved) fail(403, 'حسابك في انتظار موافقة الأدمن')
   return user
 }
 
 export const userIsAdmin = (user) => !!user?.is_admin
+export const userIsSuperAdmin = (user) => !!user?.is_super_admin
 
 export function requireAdmin(req) {
   const user = requireUser(req)
   if (!userIsAdmin(user)) fail(403, 'هذه العملية للمدير فقط')
+  return user
+}
+
+export function requireSuperAdmin(req) {
+  const user = requireUser(req)
+  if (!userIsSuperAdmin(user)) fail(403, 'هذه العملية للأدمن الرئيسي فقط')
   return user
 }
 

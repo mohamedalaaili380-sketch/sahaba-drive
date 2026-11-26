@@ -56,6 +56,21 @@ export const routes = [
     notifySpace(params.id, 'team:members', { id: params.id })
     sendJson(res, 200, { ok: true })
   } },
+  { method: 'POST', pattern: /^\/api\/teams\/(?<id>[^/]+)\/members\/all$/, handler({ req, res, params, body }) {
+    const user = requireUser(req)
+    assertAccess(user.id, params.id, 'owner')
+    const space = get('SELECT * FROM spaces WHERE id = ?', params.id) || fail(404, 'الفريق غير موجود')
+    const role = ['editor', 'viewer'].includes(body.role) ? body.role : 'editor'
+    const targets = all(`SELECT id,email FROM users
+      WHERE approved = 1 AND id != ?
+      AND id NOT IN (SELECT user_id FROM space_members WHERE space_id = ?)`, space.owner_id, params.id)
+    for (const target of targets) {
+      run('INSERT INTO space_members (space_id,user_id,role) VALUES (?,?,?)', params.id, target.id, role)
+      notify(target.id, 'team.invite', `تمت إضافتك لفريق «${space.name}» بدور ${role === 'editor' ? 'محرر' : 'قارئ'}`, null)
+    }
+    if (targets.length) notifySpace(params.id, 'team:members', { id: params.id })
+    sendJson(res, 200, { count: targets.length })
+  } },
   { method: 'PATCH', pattern: /^\/api\/teams\/(?<id>[^/]+)\/members\/(?<userId>[^/]+)$/, handler({ req, res, params, body }) {
     const user = requireUser(req)
     assertAccess(user.id, params.id, 'owner')

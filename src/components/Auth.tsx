@@ -10,6 +10,7 @@ export default function Auth({ onAuth }: { onAuth: (user: User) => void }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
   const t = useT()
   const { dir } = useLang()
@@ -23,9 +24,14 @@ export default function Auth({ onAuth }: { onAuth: (user: User) => void }) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    setError(''); setBusy(true)
+    setError(''); setNotice(''); setBusy(true)
     try {
-      const data = await post<{ user: User; token: string }>(`/auth/${mode}`, mode === 'register' ? { name, email, password } : { email, password })
+      const data = await post<{ user: User; token?: string; pending?: boolean }>(`/auth/${mode}`, mode === 'register' ? { name, email, password } : { email, password })
+      if (!data.token) {
+        setNotice(t('Account created. The admin must approve it before you can sign in.', 'تم إنشاء الحساب. لازم الأدمن يوافق قبل ما تقدر تدخل.'))
+        setMode('login'); setPassword('')
+        return
+      }
       localStorage.setItem('sahaba_token', data.token)
       onAuth(data.user)
     } catch (err: any) { setError(err.message) } finally { setBusy(false) }
@@ -65,7 +71,7 @@ export default function Auth({ onAuth }: { onAuth: (user: User) => void }) {
           </div>
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-white">{mode === 'login' ? t('Welcome back', 'أهلاً بعودتك') : t('Create a new account', 'اعمل حساب جديد')}</h2>
-            <p className="mt-2 text-sm text-[#93a1c4]">{mode === 'login' ? t('Sign in to reach your drive.', 'سجّل الدخول عشان توصل لدرايفك.') : t('Just a minute and you are ready to go.', 'دقيقة واحدة وابدأ تستخدم درايفك.')}</p>
+            <p className="mt-2 text-sm text-[#93a1c4]">{mode === 'login' ? t('Sign in to reach your drive.', 'سجّل الدخول عشان توصل لدرايفك.') : t('Create your account — the admin will activate it before you can sign in.', 'اعمل حسابك — الأدمن هو اللي هيفعّله قبل ما تقدر تدخل.')}</p>
           </div>
 
           <div className="sahaba-auth-tabs flex rounded-xl border border-white/10 bg-[#050914]/50 p-1 text-sm">
@@ -95,6 +101,7 @@ export default function Auth({ onAuth }: { onAuth: (user: User) => void }) {
               <input className="field ps-10" type="password" dir="ltr" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={8} /></div>
           </label>
 
+          {notice && <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">{notice}</div>}
           {error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>}
           <button className="btn btn-primary w-full py-3.5 text-base" disabled={busy}>
             {busy ? <><span className="spin h-4 w-4 rounded-full border-2 border-[#08101f]/30 border-t-[#08101f]" /> {t('Please wait…', 'جاري...')}</> : <>{mode === 'login' ? t('Sign in', 'دخول') : t('Create account', 'إنشاء الحساب')} <Arrow size={17} /></>}

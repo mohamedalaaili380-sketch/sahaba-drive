@@ -6,6 +6,8 @@ export type User = {
   createdAt: number
   storageLimit: number
   isAdmin: boolean
+  isSuperAdmin: boolean
+  approved: boolean
 }
 
 export type AdminUser = User & {

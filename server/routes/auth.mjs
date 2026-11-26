@@ -13,17 +13,18 @@ export const routes = [
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) fail(400, 'البريد الإلكتروني غير صحيح')
       if (password.length < 8) fail(400, 'كلمة المرور لازم تكون 8 حروف على الأقل')
       if (get('SELECT id FROM users WHERE email = ?', email)) fail(409, 'البريد مستخدم بالفعل')
-      const isAdmin = get('SELECT id FROM users LIMIT 1') ? 0 : 1
+      const first = !get('SELECT id FROM users LIMIT 1')
       const { salt, hash } = hashPassword(password)
       const userId = newId()
       const spaceId = newId()
-      run('INSERT INTO users (id,name,email,password_hash,salt,created_at,storage_limit,is_admin) VALUES (?,?,?,?,?,?,?,?)',
-        userId, name, email, hash, salt, now(), DEFAULT_STORAGE_LIMIT, isAdmin)
+      run(`INSERT INTO users (id,name,email,password_hash,salt,created_at,storage_limit,is_admin,approved,is_super_admin)
+        VALUES (?,?,?,?,?,?,?,?,?,?)`,
+        userId, name, email, hash, salt, now(), DEFAULT_STORAGE_LIMIT, first ? 1 : 0, first ? 1 : 0, first ? 1 : 0)
       run('INSERT INTO spaces (id,kind,name,owner_id,created_at) VALUES (?,?,?,?,?)',
         spaceId, 'personal', 'درايفي', userId, now())
       run('INSERT INTO space_members (space_id,user_id,role) VALUES (?,?,?)', spaceId, userId, 'owner')
-      const token = setSession(res, userId)
-      sendJson(res, 201, { user: publicUser(get('SELECT * FROM users WHERE id = ?', userId)), token })
+      const token = first ? setSession(res, userId) : null
+      sendJson(res, 201, { user: publicUser(get('SELECT * FROM users WHERE id = ?', userId)), token, pending: !first })
     },
   },
   {
@@ -33,6 +34,7 @@ export const routes = [
       const password = String(body.password || '')
       const user = get('SELECT * FROM users WHERE email = ?', email)
       if (!user || !verifyPassword(password, user.salt, user.password_hash)) fail(401, 'البريد أو كلمة المرور غلط')
+      if (!user.approved) fail(403, 'حسابك في انتظار موافقة الأدمن')
       const token = setSession(res, user.id)
       sendJson(res, 200, { user: publicUser(user), token })
     },
@@ -61,5 +63,9 @@ export const routes = [
 ]
 
 export function publicUser(user) {
-  return { id: user.id, name: user.name, email: user.email, color: user.color, createdAt: user.created_at, storageLimit: user.storage_limit, isAdmin: !!user.is_admin }
+  return {
+    id: user.id, name: user.name, email: user.email, color: user.color,
+    createdAt: user.created_at, storageLimit: user.storage_limit,
+    isAdmin: !!user.is_admin, isSuperAdmin: !!user.is_super_admin, approved: !!user.approved,
+  }
 }

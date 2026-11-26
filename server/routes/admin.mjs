@@ -1,6 +1,6 @@
 import crypto from 'node:crypto'
 import {
-  now, newId, fail, requireAdmin, sendJson, hashPassword, notify, deleteBlob,
+  now, newId, fail, requireSuperAdmin, sendJson, hashPassword, notify, deleteBlob,
 } from '../util.mjs'
 import { all, get, run } from '../db.mjs'
 import { emit } from '../events.mjs'
@@ -11,7 +11,8 @@ function adminUser(row) {
   const used = get(`SELECT COALESCE(SUM(size),0) AS s FROM items WHERE owner_id = ? AND deleted_at IS NULL AND kind = 'file'`, row.id).s
   return {
     id: row.id, name: row.name, email: row.email, color: row.color,
-    createdAt: row.created_at, storageLimit: row.storage_limit, isAdmin: !!row.is_admin,
+    createdAt: row.created_at, storageLimit: row.storage_limit,
+    isAdmin: !!row.is_admin, isSuperAdmin: !!row.is_super_admin, approved: !!row.approved,
     used,
     items: get('SELECT COUNT(*) AS c FROM items WHERE owner_id = ? AND deleted_at IS NULL', row.id).c,
     spaces: get('SELECT COUNT(*) AS c FROM spaces WHERE owner_id = ?', row.id).c,
@@ -47,9 +48,10 @@ function blobsForSpaces(ids) {
 
 export const routes = [
   { method: 'GET', pattern: /^\/api\/admin\/overview$/, handler({ req, res }) {
-    requireAdmin(req)
+    requireSuperAdmin(req)
     sendJson(res, 200, { overview: {
       users: get('SELECT COUNT(*) AS c FROM users').c,
+      pending: get('SELECT COUNT(*) AS c FROM users WHERE approved = 0').c,
       admins: get('SELECT COUNT(*) AS c FROM users WHERE is_admin = 1').c,
       spaces: get('SELECT COUNT(*) AS c FROM spaces').c,
       files: get(`SELECT COUNT(*) AS c FROM items WHERE kind = 'file' AND deleted_at IS NULL`).c,
@@ -58,14 +60,14 @@ export const routes = [
   } },
 
   { method: 'GET', pattern: /^\/api\/admin\/users$/, handler({ req, res, url }) {
-    requireAdmin(req)
+    requireSuperAdmin(req)
     const q = `%${url.searchParams.get('q') || ''}%`
-    const rows = all('SELECT * FROM users WHERE name LIKE ? OR email LIKE ? ORDER BY is_admin DESC, created_at ASC', q, q)
+    const rows = all('SELECT * FROM users WHERE name LIKE ? OR email LIKE ? ORDER BY approved ASC, is_admin DESC, created_at ASC', q, q)
     sendJson(res, 200, { users: rows.map(adminUser) })
   } },
 
   { method: 'PATCH', pattern: /^\/api\/admin\/users\/(?<id>[^/]+)$/, handler({ req, res, params, body }) {
-    requireAdmin(req)
+    requireSuperAdmin(req)
     const target = get('SELECT * FROM users WHERE id = ?', params.id) || fail(404, 'المستخدم غير موجود')
     const name = body.name === undefined ? target.name : String(body.name).trim()
     if (!name || name.length < 2) fail(400, 'الاسم قصير جداً')
@@ -78,10 +80,21 @@ export const routes = [
     sendJson(res, 200, { user: adminUser(get('SELECT * FROM users WHERE id = ?', target.id)) })
   } },
 
+  { method: 'POST', pattern: /^\/api\/admin\/users\/(?<id>[^/]+)\/approve$/, handler({ req, res, params }) {
+    requireSuperAdmin(req)
+    const target = get('SELECT * FROM users WHERE id = ?', params.id) || fail(404, 'المستخدم غير موجود')
+    if (!target.approved) {
+      run('UPDATE users SET approved = 1 WHERE id = ?', target.id)
+      notify(target.id, 'account.approved', 'تم تفعيل حسابك — تقدر تدخل دلوقتي', null)
+    }
+    sendJson(res, 200, { user: adminUser(get('SELECT * FROM users WHERE id = ?', target.id)) })
+  } },
+
   { method: 'POST', pattern: /^\/api\/admin\/users\/(?<id>[^/]+)\/admin$/, handler({ req, res, params, body }) {
-    const admin = requireAdmin(req)
+    const admin = requireSuperAdmin(req)
     const target = get('SELECT * FROM users WHERE id = ?', params.id) || fail(404, 'المستخدم غير موجود')
     const value = body.isAdmin ? 1 : 0
+    if (target.is_super_admin) fail(400, 'صلاحية الأدمن الرئيسي مش قابلة للتغيير')
     if (target.id === admin.id && !value) fail(400, 'ما تقدرش تلغي صلاحية الأدمن لنفسك')
     if (!value && target.is_admin && get('SELECT COUNT(*) AS c FROM users WHERE is_admin = 1').c <= 1) fail(400, 'لازم يبقى أدمن واحد على الأقل')
     run('UPDATE users SET is_admin = ? WHERE id = ?', value, target.id)
@@ -89,7 +102,7 @@ export const routes = [
   } },
 
   { method: 'POST', pattern: /^\/api\/admin\/users\/(?<id>[^/]+)\/reset-password$/, handler({ req, res, params, body }) {
-    requireAdmin(req)
+    requireSuperAdmin(req)
     const target = get('SELECT * FROM users WHERE id = ?', params.id) || fail(404, 'المستخدم غير موجود')
     const password = body.password ? String(body.password) : crypto.randomBytes(9).toString('base64url').slice(0, 14) + 'Aa1!'
     if (password.length < 8) fail(400, 'كلمة المرور لازم تكون 8 حروف على الأقل')
@@ -101,9 +114,10 @@ export const routes = [
   } },
 
   { method: 'DELETE', pattern: /^\/api\/admin\/users\/(?<id>[^/]+)$/, handler({ req, res, params }) {
-    const admin = requireAdmin(req)
+    const admin = requireSuperAdmin(req)
     const target = get('SELECT * FROM users WHERE id = ?', params.id) || fail(404, 'المستخدم غير موجود')
     if (target.id === admin.id) fail(400, 'ما تقدرش تحذف حسابك')
+    if (target.is_super_admin) fail(400, 'ما تقدرش تحذف الأدمن الرئيسي')
     if (target.is_admin && get('SELECT COUNT(*) AS c FROM users WHERE is_admin = 1').c <= 1) fail(400, 'لازم يبقى أدمن واحد على الأقل')
 
     const owned = all('SELECT id FROM spaces WHERE owner_id = ?', target.id).map((r) => r.id)
@@ -126,13 +140,13 @@ export const routes = [
   } },
 
   { method: 'GET', pattern: /^\/api\/admin\/spaces$/, handler({ req, res }) {
-    requireAdmin(req)
+    requireSuperAdmin(req)
     const spaces = all('SELECT * FROM spaces ORDER BY kind, created_at DESC').map(adminSpace)
     sendJson(res, 200, { spaces })
   } },
 
   { method: 'DELETE', pattern: /^\/api\/admin\/spaces\/(?<id>[^/]+)$/, handler({ req, res, params }) {
-    requireAdmin(req)
+    requireSuperAdmin(req)
     const space = get('SELECT * FROM spaces WHERE id = ?', params.id) || fail(404, 'المساحة غير موجودة')
     const members = all('SELECT user_id FROM space_members WHERE space_id = ?', space.id).map((r) => r.user_id)
     const blobs = blobsForSpaces([space.id])

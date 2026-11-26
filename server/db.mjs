@@ -15,7 +15,9 @@ CREATE TABLE IF NOT EXISTS users (
   color TEXT NOT NULL DEFAULT '#6d7cff',
   created_at INTEGER NOT NULL,
   storage_limit INTEGER NOT NULL,
-  is_admin INTEGER NOT NULL DEFAULT 0
+  is_admin INTEGER NOT NULL DEFAULT 0,
+  approved INTEGER NOT NULL DEFAULT 1,
+  is_super_admin INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS sessions (
   token TEXT PRIMARY KEY,
@@ -152,12 +154,27 @@ if (!userColumns.some((c) => c.name === 'is_admin')) {
   const first = db.prepare('SELECT id FROM users ORDER BY created_at ASC LIMIT 1').get()
   if (first) db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(first.id)
 }
+if (!userColumns.some((c) => c.name === 'approved')) {
+  db.exec('ALTER TABLE users ADD COLUMN approved INTEGER NOT NULL DEFAULT 1')
+}
+if (!userColumns.some((c) => c.name === 'is_super_admin')) {
+  db.exec('ALTER TABLE users ADD COLUMN is_super_admin INTEGER NOT NULL DEFAULT 0')
+  const first = db.prepare('SELECT id FROM users ORDER BY created_at ASC LIMIT 1').get()
+  if (first) db.prepare('UPDATE users SET is_super_admin = 1 WHERE id = ?').run(first.id)
+}
 
 // يسمح بترقية حساب بعينه عند النشر، لو أول مستخدم كان حساب اختبار.
 const bootstrapAdminEmail = String(process.env.SAHABA_ADMIN_EMAIL || '').trim().toLowerCase()
 if (bootstrapAdminEmail) {
   const target = db.prepare('SELECT id FROM users WHERE lower(email) = ?').get(bootstrapAdminEmail)
-  if (target) db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(target.id)
+  if (target) {
+    db.prepare('UPDATE users SET is_super_admin = 0 WHERE id != ?').run(target.id)
+    db.prepare('UPDATE users SET is_admin = 1, is_super_admin = 1, approved = 1 WHERE id = ?').run(target.id)
+  }
+}
+if (!db.prepare('SELECT 1 FROM users WHERE is_super_admin = 1 LIMIT 1').get()) {
+  const first = db.prepare('SELECT id FROM users ORDER BY is_admin DESC, created_at ASC LIMIT 1').get()
+  if (first) db.prepare('UPDATE users SET is_super_admin = 1, approved = 1 WHERE id = ?').run(first.id)
 }
 
 // Older databases could have spaces created before space_members existed.

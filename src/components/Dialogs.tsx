@@ -353,6 +353,15 @@ export function TeamsDialog({ onClose, onChange, notify }: { onClose: () => void
               <button className="btn btn-primary px-3 py-2" onClick={async () => {
                 try { await post(`/teams/${selected}/members`, { email, role }); setEmail(''); setDetail({ ...detail, members: [...detail.members, { id: 'new', name: email.split('@')[0], email, color: '#6d7cff', role }] }); notify(t('Added', 'تمت الإضافة'), 'ok') } catch (e: any) { notify(e.message, 'err') }
               }}><UserPlus size={15} /></button>
+              <button className="btn btn-ghost px-3 py-2" title={t('Add every approved user to this team', 'إضافة كل المستخدمين المفعّلين للفريق')} onClick={async () => {
+                try {
+                  const { count } = await post<{ count: number }>(`/teams/${selected}/members/all`, { role })
+                  await load()
+                  const fresh: any = await get(`/teams/${selected}`)
+                  setDetail(fresh.team)
+                  notify(t('Added {n} users', 'تمت إضافة {n} مستخدم', { n: count }), 'ok')
+                } catch (e: any) { notify(e.message, 'err') }
+              }}><Users size={15} /> {t('Add all', 'إضافة الكل')}</button>
             </div>}
           </>}
         </div>

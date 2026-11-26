@@ -8,7 +8,7 @@ import type { AdminSpace, AdminUser, User } from '../types'
 import { Modal, Progress } from './ui'
 import { useLang, useT } from '../i18n'
 
-type Overview = { users: number; admins: number; spaces: number; files: number; bytes: number }
+type Overview = { users: number; pending: number; admins: number; spaces: number; files: number; bytes: number }
 
 export default function AdminPanel({ currentUser, onClose, notify, onUsersChanged }: {
   currentUser: User
@@ -57,9 +57,9 @@ export default function AdminPanel({ currentUser, onClose, notify, onUsersChange
   return (
     <Modal wide title={t('Admin console', 'لوحة التحكم')}
       subtitle={overview
-        ? t('{users} users · {spaces} spaces · {files} files · {bytes} used', '{users} مستخدم · {spaces} مساحة · {files} ملف · {bytes} مستخدم', {
+        ? `${t('{users} users · {spaces} spaces · {files} files · {bytes} used', '{users} مستخدم · {spaces} مساحة · {files} ملف · {bytes} مستخدم', {
           users: number(overview.users), spaces: number(overview.spaces), files: number(overview.files), bytes: formatBytes(overview.bytes),
-        })
+        })}${overview.pending ? ` · ${t('{n} awaiting approval', '{n} في انتظار الموافقة', { n: number(overview.pending) })}` : ''}`
         : t('Manage users, quotas and spaces', 'إدارة المستخدمين والحصص والمساحات')}
       onClose={onClose}>
 
@@ -88,7 +88,9 @@ export default function AdminPanel({ currentUser, onClose, notify, onUsersChange
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate text-sm font-bold">{u.name}</p>
-                    {u.isAdmin && <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] text-amber-300"><ShieldCheck size={10} /> {t('Admin', 'مدير')}</span>}
+                    {u.isSuperAdmin && <span className="flex items-center gap-1 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200"><ShieldCheck size={10} /> {t('Main admin', 'الأدمن الرئيسي')}</span>}
+                    {u.isAdmin && !u.isSuperAdmin && <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] text-amber-300"><ShieldCheck size={10} /> {t('Admin', 'مدير')}</span>}
+                    {!u.approved && <span className="flex items-center gap-1 rounded-full bg-sky-500/15 px-2 py-0.5 text-[10px] text-sky-300"><Check size={10} /> {t('Pending', 'في انتظار الموافقة')}</span>}
                     {u.id === currentUser.id && <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-[#9aa6ce]">{t('You', 'أنت')}</span>}
                   </div>
                   <p className="truncate text-[11px] text-[#8591ba]" dir="ltr">{u.email}</p>
@@ -118,12 +120,17 @@ export default function AdminPanel({ currentUser, onClose, notify, onUsersChange
               </div>}
 
               <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-white/10 pt-3 text-[11px]">
-                <button className="btn btn-ghost px-2 py-1 !text-[11px]" disabled={busy} onClick={() => run(async () => {
+                {!u.approved && <button className="btn btn-primary px-2 py-1 !text-[11px]" disabled={busy} onClick={() => run(async () => {
+                  await post(`/admin/users/${u.id}/approve`, {})
+                }, t('User approved', 'تم تفعيل المستخدم'))}>
+                  <Check size={13} /> {t('Approve access', 'السماح بالدخول')}
+                </button>}
+                {!u.isSuperAdmin && <button className="btn btn-ghost px-2 py-1 !text-[11px]" disabled={busy} onClick={() => run(async () => {
                   await post(`/admin/users/${u.id}/admin`, { isAdmin: !u.isAdmin })
                 }, u.isAdmin ? t('Admin access revoked', 'تم سحب صلاحية الأدمن') : t('User promoted to admin', 'تم ترقية المستخدم لأدمن'))}>
                   {u.isAdmin ? <ShieldOff size={13} /> : <ShieldCheck size={13} />}
                   {u.isAdmin ? t('Revoke admin', 'سحب الأدمن') : t('Make admin', 'تعيين أدمن')}
-                </button>
+                </button>}
                 <button className="btn btn-ghost px-2 py-1 !text-[11px]" disabled={busy} onClick={() => { setQuotaId(quotaId === u.id ? '' : u.id); setQuotaMB(String(Math.round(u.storageLimit / 1024 / 1024))) }}>
                   <HardDrive size={13} /> {t('Quota', 'الحصة')}
                 </button>
@@ -133,13 +140,13 @@ export default function AdminPanel({ currentUser, onClose, notify, onUsersChange
                 }, t('Password reset', 'تمت إعادة تعيين كلمة المرور'))}>
                   <KeyRound size={13} /> {t('Reset password', 'إعادة تعيين الباسورد')}
                 </button>
-                {confirmDelete === u.id
+                {!u.isSuperAdmin && (confirmDelete === u.id
                   ? <button className="btn btn-danger px-2 py-1 !text-[11px]" disabled={busy} onClick={() => { run(async () => { await del(`/admin/users/${u.id}`) }, t('User deleted', 'تم حذف المستخدم')); setConfirmDelete('') }}>
                     <AlertTriangle size={13} /> {t('Confirm delete', 'تأكيد الحذف')}
                   </button>
                   : <button className="btn btn-ghost px-2 py-1 !text-[11px] text-rose-300" disabled={busy || u.id === currentUser.id} onClick={() => setConfirmDelete(u.id)}>
                     <Trash2 size={13} /> {t('Delete', 'حذف')}
-                  </button>}
+                  </button>)}
               </div>
             </div>
           ))}

@@ -388,7 +388,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
           <p className="sahaba-section-title px-3 pb-1 pt-5 text-[10px] font-bold">{t('Categories', 'التصنيفات')}</p>
           <NavButton icon={Star} label={t('Starred', 'المفضلة')} active={view === 'starred'} onClick={() => navigate('starred')} />
           <NavButton icon={Clock} label={t('Trash', 'سلة المهملات')} active={view === 'trash'} onClick={() => navigate('trash')} />
-          {user.isAdmin && <NavButton icon={ShieldCheck} label={t('Admin console', 'لوحة التحكم')} active={adminOpen} onClick={() => setAdminOpen(true)} />}
+          {user.isSuperAdmin && <NavButton icon={ShieldCheck} label={t('Admin console', 'لوحة التحكم')} active={adminOpen} onClick={() => setAdminOpen(true)} />}
           {tags.length > 0 && <p className="sahaba-section-title px-3 pb-1 pt-5 text-[10px] font-bold">{t('Tags', 'الوسوم')}</p>}
           {tags.map((tag) => (
             <button key={tag.id} onClick={() => navigate('tag', { tag: tag.id })} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${view === 'tag' && tagFilter === tag.id ? 'bg-[#6d7cff2e] text-white' : 'text-[#9ca8d0] hover:bg-white/5'}`}>
@@ -407,7 +407,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
           <StorageBar used={used} limit={user.storageLimit} />
           <div className="flex items-center gap-3 rounded-xl bg-white/5 p-2.5">
             <div className="grid h-9 w-9 place-items-center rounded-full text-sm font-bold" style={{ background: `${user.color}33`, color: user.color }}>{user.name[0]}</div>
-            <div className="min-w-0 flex-1"><p className="truncate text-xs font-bold">{user.name}{user.isAdmin && <span className="ms-1 text-[10px] text-amber-300">· {t('Admin', 'مدير')}</span>}</p><p className="truncate text-[10px] text-[#7884ad]" dir="ltr">{user.email}</p></div>
+            <div className="min-w-0 flex-1"><p className="truncate text-xs font-bold">{user.name}{user.isSuperAdmin && <span className="ms-1 text-[10px] text-amber-300">· {t('Admin', 'مدير')}</span>}</p><p className="truncate text-[10px] text-[#7884ad]" dir="ltr">{user.email}</p></div>
             <button title={t('Sign out', 'تسجيل الخروج')} className="text-[#8f9bc2] hover:text-rose-300" onClick={onLogout}><LogOut size={16} /></button>
           </div>
         </div>
@@ -429,7 +429,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
             <button className="sahaba-iconbtn relative rounded-xl p-2.5" title={t('Notifications', 'الإشعارات')} onClick={() => setNotifOpen(!notifOpen)}><Bell size={19} />
               {unread > 0 && <span className="absolute -start-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">{unread}</span>}</button>
             <button className="sahaba-iconbtn hidden rounded-xl p-2.5 sm:block" title={t('Teams', 'الفرق')} onClick={() => setTeamsOpen(true)}><Users size={19} /></button>
-            {user.isAdmin && <button className="sahaba-iconbtn hidden rounded-xl p-2.5 sm:block" title={t('Admin console', 'لوحة التحكم')} onClick={() => setAdminOpen(true)}><ShieldCheck size={19} /></button>}
+            {user.isSuperAdmin && <button className="sahaba-iconbtn hidden rounded-xl p-2.5 sm:block" title={t('Admin console', 'لوحة التحكم')} onClick={() => setAdminOpen(true)}><ShieldCheck size={19} /></button>}
           </div>
 
           {notifOpen && <div className="sahaba-popover absolute start-4 top-16 z-50 w-[min(360px,90vw)] overflow-hidden rounded-2xl border border-white/10 bg-[#121a30] shadow-2xl">
