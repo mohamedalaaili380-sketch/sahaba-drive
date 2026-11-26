@@ -56,7 +56,7 @@ export default function PublicShare({ token }: { token: string }) {
   }
 
   if (error === 'PASSWORD_REQUIRED') return (
-    <div className="grid min-h-full place-items-center bg-[#080c18] p-5">
+    <div className="sahaba-public grid min-h-full place-items-center bg-[#080c18] p-5">
       <form onSubmit={unlock} className="w-full max-w-md space-y-5 rounded-3xl border border-white/10 bg-[#121a30] p-8 text-center shadow-2xl enter">
         <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-amber-500/15 text-amber-300"><Lock size={28} /></div>
         <h2 className="text-2xl font-bold">{t('Protected link', 'رابط محمي')}</h2>
@@ -70,7 +70,7 @@ export default function PublicShare({ token }: { token: string }) {
   )
 
   if (error) return (
-    <div className="grid min-h-full place-items-center bg-[#080c18] p-5">
+    <div className="sahaba-public grid min-h-full place-items-center bg-[#080c18] p-5">
       <div className="max-w-md space-y-4 rounded-3xl border border-rose-500/20 bg-[#1a1020] p-8 text-center">
         <AlertCircle size={44} className="mx-auto text-rose-400" />
         <h2 className="text-xl font-bold">{t('Link unavailable', 'الرابط غير متاح')}</h2><p className="text-sm text-[#a5a0bb]">{error}</p>
@@ -79,7 +79,7 @@ export default function PublicShare({ token }: { token: string }) {
     </div>
   )
 
-  if (!share) return <div className="grid min-h-full place-items-center"><Loader2 className="spin text-[#8b9cff]" size={32} /></div>
+  if (!share) return <div className="sahaba-public grid min-h-full place-items-center"><Loader2 className="spin text-[#8b9cff]" size={32} /></div>
 
   const canDownload = share.permission !== 'view'
   const contentUrlFor = (child?: string, download = false, inline = false) =>
@@ -87,9 +87,9 @@ export default function PublicShare({ token }: { token: string }) {
   const type = share.item.mime.split('/')[0]
 
   return (
-    <div className="min-h-full overflow-auto bg-[#080c18]">
+    <div className="sahaba-public min-h-full overflow-auto bg-[#080c18]">
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-white/10 bg-[#0c1224]/90 px-5 py-3 backdrop-blur">
-        <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-[#6d7cff] to-[#a855f7]"><Cloud size={19} /></div>
+        <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-[#7c6cff] via-[#5b8cff] to-[#35d6d0]"><Cloud size={19} /></div>
         <span className="gradient-text text-lg font-extrabold tracking-tight">Sahaba</span>
         <div className="ms-auto flex gap-2">
           {share.allowComments && <button className="btn btn-ghost px-3 py-1.5" onClick={() => setShowComments(true)}><MessageSquare size={15} /> {t('Comments ({n})', 'تعليقات ({n})', { n: comments.length })}</button>}

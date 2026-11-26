@@ -390,8 +390,14 @@ export function SearchDialog({ tags, initial, onSearch, onClose }: { tags: Tag[]
 
 export function StorageBar({ used, limit }: { used: number; limit: number }) {
   const t = useT()
-  const pct = Math.min(100, Math.round((used / limit) * 100))
-  return <div className="space-y-1.5"><div className="flex justify-between text-[11px] text-[#8f9bc2]"><span>{t('Storage used', 'المساحة المستخدمة')}</span><span>{formatBytes(used)} / {formatBytes(limit)}</span></div><Progress value={pct} /></div>
+  const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0
+  return <div className="space-y-2">
+    <div className="flex items-baseline justify-between gap-2 text-[11px] text-[#a8b5d8]">
+      <span>{t('Storage used', 'المساحة المستخدمة')}</span>
+      <span className="font-semibold tabular-nums" dir="ltr">{formatBytes(used)} / {formatBytes(limit)} · {pct}%</span>
+    </div>
+    <Progress value={pct} label={t('Storage used', 'المساحة المستخدمة')} />
+  </div>
 }
 
 export { History, TagIcon }

@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { contentUrl, del, formatBytes, formatDate, get, patch, post, uploadFile } from '../api'
 import type { AppNotification, Item, Space, Tag, User } from '../types'
-import { Empty, ItemIcon, Spinner, ToastStack } from './ui'
+import { Empty, ItemIcon, SkeletonGrid, ToastStack } from './ui'
 import {
   BulkMoveDialog, BulkTagsDialog, MoveDialog, SearchDialog, ShareDialog, StorageBar, TagsDialog,
   TeamsDialog, TextDialog, VersionsDialog,
@@ -60,9 +60,13 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
   const [used, setUsed] = useState(0)
   const [query, setQuery] = useState('')
   const [online, setOnline] = useState<{ id: string; name: string }[]>([])
+  const [realtime, setRealtime] = useState<'connecting' | 'live' | 'offline'>('connecting')
   const ws = useRef<WebSocket | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
   const toastId = useRef(0)
+  const liveRef = useRef(false)
+  const detailRef = useRef<string | null>(null)
+  const editorIdRef = useRef<string | null>(null)
   const { comments, refresh: refreshComments } = useItemComments(detail?.id || null)
 
   const notify = useCallback((text: string, kind: 'ok' | 'err' | 'info' = 'ok') => {
@@ -113,36 +117,101 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
     } catch { /* ignore */ }
   }, [])
 
+  const actionsRef = useRef({ loadItems, loadShell, loadUsed, refreshComments, t })
+  useEffect(() => { actionsRef.current = { loadItems, loadShell, loadUsed, refreshComments, t } }, [loadItems, loadShell, loadUsed, refreshComments, t])
+
   const refresh = useCallback(() => { loadShell(); loadItems(); loadUsed() }, [loadShell, loadItems, loadUsed])
 
   useEffect(() => { loadShell(); loadUsed() }, [loadShell, loadUsed])
   useEffect(() => { if (spaceId || view === 'shared') loadItems() }, [spaceId, folderId, view, filters, tagFilter, loadItems])
 
-  // realtime
+  // Realtime with exponential backoff; HTTP polling keeps the view fresh when WebSocket is unavailable.
   useEffect(() => {
     const token = localStorage.getItem('sahaba_token')
-    if (!token) return
-    let socket: WebSocket
-    try { socket = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws?token=${encodeURIComponent(token)}`) } catch { return }
-    ws.current = socket
-    socket.onmessage = (event) => {
-      try {
-        const { event: name, payload } = JSON.parse(event.data)
-        if (name === 'space:changed' || name === 'team:members' || name === 'team:updated') { loadItems(); loadShell(); loadUsed() }
-        if (name === 'notification') {
-          notify(payload.message, 'info')
-          get<{ notifications: AppNotification[] }>('/notifications').then((d) => setNotifications(d.notifications))
-        }
-        if (name === 'comment:new') { refreshComments(); loadItems() }
-        if (name === 'presence') setOnline(payload.users || [])
-        if (name === 'doc:changed' && editor?.id === payload.itemId && payload.author !== user.id) notify(t('This file was edited by another user', 'تم تعديل الملف من مستخدم آخر'), 'info')
-      } catch { /* ignore */ }
+    if (!token) { setRealtime('offline'); return }
+    let socket: WebSocket | null = null
+    let retryTimer: number | undefined
+    let attempts = 0
+    let stopped = false
+
+    let connect: () => void = () => {}
+    const scheduleReconnect = () => {
+      if (stopped) return
+      attempts += 1
+      const wait = Math.min(15000, 1000 * 2 ** Math.min(attempts, 4)) + Math.floor(Math.random() * 400)
+      retryTimer = window.setTimeout(connect, wait)
     }
-    return () => { socket.close(); ws.current = null }
-  }, [user.id, loadItems, loadShell, loadUsed, refreshComments, notify, editor?.id, t])
+
+    connect = () => {
+      if (stopped) return
+      setRealtime('connecting')
+      let current: WebSocket
+      try {
+        current = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws?token=${encodeURIComponent(token)}`)
+      } catch { scheduleReconnect(); return }
+      socket = current
+      ws.current = current
+
+      current.onopen = () => {
+        attempts = 0
+        liveRef.current = true
+        setRealtime('live')
+        if (detailRef.current) current.send(JSON.stringify({ event: 'join', itemId: detailRef.current }))
+      }
+      current.onmessage = (event) => {
+        try {
+          const { event: name, payload } = JSON.parse(event.data)
+          const actions = actionsRef.current
+          if (name === 'space:changed' || name === 'team:members' || name === 'team:updated') { actions.loadItems(); actions.loadShell(); actions.loadUsed() }
+          if (name === 'notification') {
+            notify(payload.message, 'info')
+            get<{ notifications: AppNotification[] }>('/notifications').then((d) => setNotifications(d.notifications))
+          }
+          if (name === 'comment:new') { actions.refreshComments(); actions.loadItems() }
+          if (name === 'presence') setOnline(payload.users || [])
+          if (name === 'doc:changed' && editorIdRef.current === payload.itemId && payload.author !== user.id) notify(actions.t('This file was edited by another user', 'تم تعديل الملف من مستخدم آخر'), 'info')
+        } catch { /* ignore */ }
+      }
+      current.onerror = () => {
+        try {
+          if (current.readyState === WebSocket.OPEN || current.readyState === WebSocket.CONNECTING) current.close()
+        } catch { /* already closing */ }
+      }
+      current.onclose = () => {
+        if (ws.current === current) ws.current = null
+        liveRef.current = false
+        setOnline([])
+        setRealtime('offline')
+        scheduleReconnect()
+      }
+    }
+
+    connect()
+    return () => {
+      stopped = true
+      if (retryTimer) window.clearTimeout(retryTimer)
+      liveRef.current = false
+      if (socket && socket.readyState !== WebSocket.CLOSED) socket.close()
+      ws.current = null
+    }
+  }, [user.id, notify])
 
   useEffect(() => {
-    if (ws.current?.readyState === WebSocket.OPEN && detail) ws.current.send(JSON.stringify({ event: 'join', itemId: detail.id }))
+    const timer = window.setInterval(() => {
+      if (!liveRef.current) {
+        const { loadItems, loadShell, loadUsed } = actionsRef.current
+        loadShell(); loadItems(); loadUsed()
+      }
+    }, 30000)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  useEffect(() => { detailRef.current = detail?.id || null }, [detail?.id])
+  useEffect(() => { editorIdRef.current = editor?.id || null }, [editor?.id])
+
+  useEffect(() => {
+    const socket = ws.current
+    if (socket?.readyState === WebSocket.OPEN && detailRef.current) socket.send(JSON.stringify({ event: 'join', itemId: detailRef.current }))
   }, [detail?.id])
 
   useEffect(() => {
@@ -265,6 +334,9 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
           : view === 'tag' ? t('Tag: {name}', 'وسم: {name}', { name: tags.find((tag) => tag.id === tagFilter)?.name || '' })
             : t('Search results', 'نتائج البحث')
   const unread = notifications.filter((n) => !n.read).length
+  const statusLabel = realtime === 'live' ? t('Live', 'متصل')
+    : realtime === 'connecting' ? t('Connecting…', 'جاري الاتصال...')
+      : t('Offline · retrying', 'غير متصل · إعادة المحاولة')
   const selectedItems = useMemo(() => items.filter((i) => selected.includes(i.id)), [items, selected])
   const selectedFiles = selectedItems.filter((i) => i.kind === 'file')
   const allSelected = items.length > 0 && selected.length === items.length
@@ -286,21 +358,21 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
         <button className="btn btn-ghost mx-4 mt-2 py-2.5" onClick={() => setDialog({ type: 'folder' })}><FolderPlus size={17} /> {t('New folder', 'مجلد جديد')}</button>
 
         <nav className="scroll-thin mt-5 flex-1 space-y-1 overflow-auto px-3">
-          <p className="px-3 pb-1 text-[10px] font-bold tracking-wide text-[#5f6b93]">{t('Spaces', 'المساحات')}</p>
+          <p className="sahaba-section-title px-3 pb-1 text-[10px] font-bold">{t('Spaces', 'المساحات')}</p>
           <NavButton icon={Home} label={t('My Drive', 'درايفك')} active={view === 'drive'} onClick={() => navigate('drive')} />
           <NavButton icon={Users} label={t('Teams', 'الفرق')} active={teamsOpen} onClick={() => setTeamsOpen(true)} badge={spaces.filter((s) => s.kind === 'team').length} />
           <NavButton icon={Share2} label={t('Shared with me', 'مشاركة معك')} active={view === 'shared'} onClick={() => navigate('shared')} />
-          <p className="px-3 pb-1 pt-5 text-[10px] font-bold tracking-wide text-[#5f6b93]">{t('Categories', 'التصنيفات')}</p>
+          <p className="sahaba-section-title px-3 pb-1 pt-5 text-[10px] font-bold">{t('Categories', 'التصنيفات')}</p>
           <NavButton icon={Star} label={t('Starred', 'المفضلة')} active={view === 'starred'} onClick={() => navigate('starred')} />
           <NavButton icon={Clock} label={t('Trash', 'سلة المهملات')} active={view === 'trash'} onClick={() => navigate('trash')} />
           {user.isAdmin && <NavButton icon={ShieldCheck} label={t('Admin console', 'لوحة التحكم')} active={adminOpen} onClick={() => setAdminOpen(true)} />}
-          {tags.length > 0 && <p className="px-3 pb-1 pt-5 text-[10px] font-bold tracking-wide text-[#5f6b93]">{t('Tags', 'الوسوم')}</p>}
+          {tags.length > 0 && <p className="sahaba-section-title px-3 pb-1 pt-5 text-[10px] font-bold">{t('Tags', 'الوسوم')}</p>}
           {tags.map((tag) => (
             <button key={tag.id} onClick={() => navigate('tag', { tag: tag.id })} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${view === 'tag' && tagFilter === tag.id ? 'bg-[#6d7cff2e] text-white' : 'text-[#9ca8d0] hover:bg-white/5'}`}>
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: tag.color }} /><span className="truncate">{tag.name}</span>
             </button>
           ))}
-          <p className="px-3 pb-1 pt-5 text-[10px] font-bold tracking-wide text-[#5f6b93]">{t('Team spaces', 'مساحات الفرق')}</p>
+          <p className="sahaba-section-title px-3 pb-1 pt-5 text-[10px] font-bold">{t('Team spaces', 'مساحات الفرق')}</p>
           {spaces.filter((s) => s.kind === 'team').map((s) => (
             <button key={s.id} onClick={() => navigate('drive', { space: s.id })} className={`sahaba-nav flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${view === 'drive' && spaceId === s.id ? 'active' : ''}`}>
               <Users size={16} className="text-[#9aa9ff]" /><span className="truncate">{displaySpace(s.name)}</span>
@@ -352,7 +424,20 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
           </div>}
         </header>
 
-        <div className="sahaba-toolbar flex shrink-0 flex-wrap items-center gap-3 border-b border-white/5 px-5 py-4">
+        <section className="sahaba-hero flex shrink-0 flex-wrap items-end justify-between gap-4 border-b border-[#e8ebf4] px-5 py-5 sm:px-6" aria-labelledby="sahaba-view-title">
+          <div className="min-w-0">
+            <p className="sahaba-eyebrow">{t('Workspace', 'مساحة العمل')}</p>
+            <h2 id="sahaba-view-title" className="sahaba-hero-title">{view === 'drive' ? (trail.at(-1)?.name || displaySpace(spaceName) || t('My Drive', 'درايفك')) : title}</h2>
+            <p className="sahaba-hero-sub">{t('Everything you keep, organized and ready to share.', 'كل ملفاتك منظمة وجاهزة للمشاركة.')}</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="sahaba-hero-status flex items-center gap-2" title={statusLabel}><i className={`sahaba-live ${realtime === 'live' ? 'on' : ''}`} aria-hidden="true" />{statusLabel}</span>
+            <button className="btn btn-ghost px-3 py-2 !text-xs" onClick={() => setDialog({ type: 'folder' })}><FolderPlus size={15} /> {t('New folder', 'مجلد جديد')}</button>
+            <button className="btn btn-primary sahaba-hero-cta" onClick={() => fileInput.current?.click()}><Upload size={17} /> {t('Upload files', 'رفع ملفات')}</button>
+          </div>
+        </section>
+
+        <div className="sahaba-toolbar flex shrink-0 flex-wrap items-center gap-3 border-b border-white/5 px-5 py-3">
           {view === 'drive' && <button className="sahaba-muted" onClick={() => { setFolderId(null); setView('drive') }} title={t('Root', 'الجذر')}><Home size={17} /></button>}
           {trail.map((crumb, i) => (
             <span key={crumb.id} className="flex items-center gap-2 text-sm">
@@ -360,7 +445,6 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
               <button className={i === trail.length - 1 ? 'active font-bold' : 'sahaba-crumb'} onClick={() => { setFolderId(crumb.id); setView('drive') }}>{crumb.name}</button>
             </span>
           ))}
-          {view !== 'drive' && <h2 className="text-lg font-bold">{title}</h2>}
           <span className="sahaba-pill rounded-full px-2.5 py-1 text-[11px]">{t('{n} items', '{n} عنصر', { n: items.length })}</span>
           {selected.length > 0 && <div className="flex flex-wrap items-center gap-1 rounded-xl border border-[#6d7cff]/40 bg-[#6d7cff12] px-2 py-1">
             <span className="px-1 text-[11px] font-bold text-[#aab6ff]">{t('{n} selected', '{n} محدد', { n: selected.length })}</span>
@@ -380,8 +464,6 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
             <button className="rounded-lg p-1 text-[#8f9bc2] hover:bg-white/10" title={t('Clear selection', 'إلغاء التحديد')} onClick={() => { setSelected([]); setDetail(null) }}><X size={14} /></button>
           </div>}
           <div className="ms-auto flex items-center gap-2">
-            <button className="btn btn-ghost px-3 py-2 !text-xs" onClick={() => fileInput.current?.click()}><Upload size={15} /> {t('Upload', 'رفع')}</button>
-            <button className="btn btn-ghost px-3 py-2 !text-xs" onClick={() => setDialog({ type: 'folder' })}><FolderPlus size={15} /> {t('Folder', 'مجلد')}</button>
             <div className="sahaba-layout flex rounded-xl border border-white/10 bg-white/5 p-0.5">
               <button className={`rounded-lg p-1.5 ${layout === 'grid' ? 'active' : ''}`} onClick={() => setLayout('grid')} title={t('Grid', 'شبكة')}><LayoutGrid size={16} /></button>
               <button className={`rounded-lg p-1.5 ${layout === 'list' ? 'active' : ''}`} onClick={() => setLayout('list')} title={t('List', 'قائمة')}><List size={16} /></button>
@@ -400,22 +482,37 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
             <div className="min-w-0"><b className="block text-[13px]">{t('Your files are safely in your drive', 'ملفاتك محفوظة بأمان في درايفك')}</b><span className="mt-1 block text-[11px]">{formatBytes(used)} / {formatBytes(user.storageLimit)} · {t('Synced automatically', 'مزامنة تلقائياً')}</span></div>
             <span className="ms-auto shrink-0 rounded-full bg-white/15 px-3 py-1.5 text-[11px]">{t('All good', 'كل تمام')}</span>
           </div>}
-          <div className="sahaba-empty-wrap">
-          {loading ? <Spinner label={t('Loading files…', 'جاري تحميل الملفات...')} /> : items.length === 0 ? (
-            <Empty icon={view === 'trash' ? Trash2 : view === 'starred' ? Star : Folder} title={view === 'search' ? t('No matching results', 'مفيش نتائج مطابقة') : t('Nothing here yet', 'مفيش ملفات هنا')}
-              hint={t('Drag your files here or press Upload to get started.', 'اسحب ملفاتك وأفلتها هنا أو اضغط رفع للبدء.')}
-              action={<button className="btn btn-primary mt-2" onClick={() => fileInput.current?.click()}><FilePlus2 size={16} /> {t('Upload files', 'رفع ملفات')}</button>} />
-          ) : layout === 'grid' ? (
+          <div className="sahaba-empty-wrap" aria-busy={loading}>
+            {loading ? <SkeletonGrid /> : items.length === 0 ? (
+              <Empty
+                icon={view === 'trash' ? Trash2 : view === 'starred' ? Star : Folder}
+                title={view === 'search' || view === 'tag' ? t('No matching results', 'مفيش نتائج مطابقة') : t('Nothing here yet', 'مفيش ملفات هنا')}
+                hint={view === 'trash'
+                  ? t('Files you delete will appear here.', 'الملفات اللي تحذفها هتظهر هنا.')
+                  : view === 'starred'
+                    ? t('Star a file to keep it close at hand.', 'ضيف ملف للمفضلة عشان تلاقيه بسرعة.')
+                    : view === 'search' || view === 'tag'
+                      ? t('Try a different search or clear your filters.', 'جرّب بحث تاني أو امسح الفلاتر.')
+                      : t('Drag your files here or press Upload to get started.', 'اسحب ملفاتك وأفلتها هنا أو اضغط رفع للبدء.')}
+                action={view === 'trash' ? null : <button className="btn btn-primary mt-2" onClick={() => fileInput.current?.click()}><FilePlus2 size={16} /> {t('Upload files', 'رفع ملفات')}</button>}
+              />
+            ) : layout === 'grid' ? (
             <div className="sahaba-grid grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {items.map((item) => (
-                <button key={item.id} onClick={(e) => {
-                  if (e.ctrlKey || e.metaKey || e.shiftKey) setSelected((s) => s.includes(item.id) ? s.filter((x) => x !== item.id) : [...s, item.id])
-                  else { setSelected([item.id]); setDetail(item) }
-                }} onDoubleClick={() => openItem(item)}
+                <div key={item.id} role="button" tabIndex={0} aria-label={item.name} aria-pressed={selected.includes(item.id)}
+                  onClick={(e) => {
+                    if (e.ctrlKey || e.metaKey || e.shiftKey) setSelected((s) => s.includes(item.id) ? s.filter((x) => x !== item.id) : [...s, item.id])
+                    else { setSelected([item.id]); setDetail(item) }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.target !== e.currentTarget) return
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected([item.id]); setDetail(item) }
+                  }}
+                  onDoubleClick={() => openItem(item)}
                   onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setCtx({ x: e.clientX, y: e.clientY, item }); setSelected([item.id]) }}
                   className={`sahaba-file card-hover group relative flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-white/[.035] p-4 text-start ${selected.includes(item.id) ? 'selected' : ''}`}>
-                  <button className="absolute start-3 top-3 text-amber-400 opacity-0 transition group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); menuAction('star', item) }} title={t('Star', 'مفضلة')}>
-                    <Star size={16} fill={item.starred ? 'currentColor' : 'none'} className={item.starred ? 'opacity-100' : ''} /></button>
+                  <button type="button" aria-label={t('Star', 'مفضلة')} className={`absolute start-3 top-3 text-amber-400 transition ${item.starred ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'}`} onClick={(e) => { e.stopPropagation(); menuAction('star', item) }} title={t('Star', 'مفضلة')}>
+                    <Star size={16} fill={item.starred ? 'currentColor' : 'none'} /></button>
                   <div className="sahaba-thumb grid h-16 w-16 place-items-center"><ItemIcon item={item} size={38} /></div>
                   <div className="w-full"><p className="truncate text-sm font-semibold">{item.name}</p>
                     <p className="sahaba-meta mt-1 flex items-center gap-2 text-[10px] text-[#7c88b0]">{formatDate(item.updated_at)}{item.kind === 'file' && <><span>•</span>{formatBytes(item.size)}</>}{item.version > 1 && <><span>•</span>v{item.version}</>}</p></div>
@@ -423,7 +520,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
                     {item.tags.slice(0, 2).map((tag) => <span key={tag.id} className="flex items-center gap-1 rounded-full px-2 py-0.5" style={{ background: `${tag.color}22`, color: tag.color }}><span className="h-1.5 w-1.5 rounded-full" style={{ background: tag.color }} />{tag.name}</span>)}
                     {item.comments_count > 0 && <span className="ms-auto flex items-center gap-1"><MessageSquare size={11} />{item.comments_count}</span>}
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           ) : (
@@ -432,20 +529,27 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
                 <span>{t('Name', 'الاسم')}</span><span className="max-md:hidden">{t('Size', 'الحجم')}</span><span>{t('Last modified', 'آخر تعديل')}</span><span>{t('Actions', 'إجراءات')}</span>
               </div>
               {items.map((item) => (
-                <button key={item.id} onClick={(e) => {
-                  if (e.ctrlKey || e.metaKey || e.shiftKey) setSelected((s) => s.includes(item.id) ? s.filter((x) => x !== item.id) : [...s, item.id])
-                  else { setSelected([item.id]); setDetail(item) }
-                }} onDoubleClick={() => openItem(item)}
+                <div key={item.id} role="button" tabIndex={0} aria-label={item.name} aria-pressed={selected.includes(item.id)}
+                  onClick={(e) => {
+                    if (e.target instanceof HTMLButtonElement) return
+                    if (e.ctrlKey || e.metaKey || e.shiftKey) setSelected((s) => s.includes(item.id) ? s.filter((x) => x !== item.id) : [...s, item.id])
+                    else { setSelected([item.id]); setDetail(item) }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.target !== e.currentTarget) return
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected([item.id]); setDetail(item) }
+                  }}
+                  onDoubleClick={() => openItem(item)}
                   onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setCtx({ x: e.clientX, y: e.clientY, item }); setSelected([item.id]) }}
                   className={`sahaba-list-row grid w-full grid-cols-[1fr_120px_140px_100px] items-center gap-3 border-b border-white/5 px-4 py-2.5 text-start text-sm transition hover:bg-white/5 max-md:grid-cols-[1fr_80px_40px] ${selected.includes(item.id) ? 'bg-[#6d7cff1a]' : ''}`}>
                   <span className="flex min-w-0 items-center gap-3"><ItemIcon item={item} size={25} /><span className="truncate">{item.name}</span>{item.starred && <Star size={13} className="text-amber-400" fill="currentColor" />}</span>
-                  <span className="sahaba-meta text-xs text-[#8793bb] max-md:hidden">{item.kind === 'file' ? formatBytes(item.size) : '—'}</span>
-                  <span className="sahaba-meta text-xs text-[#8793bb]">{formatDate(item.updated_at)}</span>
-                  <span className="sahaba-meta flex gap-1 text-[#8793bb]">
-                    <span title={t('Share', 'مشاركة')} onClick={(e) => { e.stopPropagation(); setDialog({ type: 'share', item }) }}><Share2 size={15} className="hover:text-white" /></span>
-                    <span title={t('Versions', 'إصدارات')} onClick={(e) => { e.stopPropagation(); setDialog({ type: 'versions', item }) }}><History size={15} className="hover:text-white" /></span>
+                  <span className="sahaba-meta text-xs text-[#5f6b8a] max-md:hidden">{item.kind === 'file' ? formatBytes(item.size) : '—'}</span>
+                  <span className="sahaba-meta text-xs text-[#5f6b8a]">{formatDate(item.updated_at)}</span>
+                  <span className="flex gap-1">
+                    <button type="button" title={t('Share', 'مشاركة')} aria-label={t('Share', 'مشاركة')} className="rounded-md p-1 text-[#5f6b8a] transition hover:bg-white/60 hover:text-[#5b4bd6]" onClick={(e) => { e.stopPropagation(); setDialog({ type: 'share', item }) }}><Share2 size={15} /></button>
+                    <button type="button" title={t('Versions', 'إصدارات')} aria-label={t('Versions', 'إصدارات')} className="rounded-md p-1 text-[#5f6b8a] transition hover:bg-white/60 hover:text-[#5b4bd6]" onClick={(e) => { e.stopPropagation(); setDialog({ type: 'versions', item }) }}><History size={15} /></button>
                   </span>
-                </button>
+                </div>
               ))}
             </div>
           )}
@@ -457,7 +561,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
         </div>}
       </div>
 
-      {detail && <aside className="hidden w-80 shrink-0 flex-col border-s border-white/10 bg-[#0c1224] xl:flex">
+      {detail && <aside className="sahaba-detail hidden w-80 shrink-0 flex-col border-s border-white/10 bg-[#0c1224] xl:flex">
         <div className="flex items-center justify-between border-b border-white/10 px-4 py-3"><h3 className="text-sm font-bold">{t('Item details', 'تفاصيل العنصر')}</h3>
           <button className="text-[#8f9bc2] hover:text-white" onClick={() => { setDetail(null); setShowComments(false) }}><X size={17} /></button></div>
         <div className="scroll-thin flex-1 overflow-auto">

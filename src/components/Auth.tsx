@@ -59,9 +59,9 @@ export default function Auth({ onAuth }: { onAuth: (user: User) => void }) {
       <div className="relative flex items-center justify-center px-6 py-12">
         <div className="absolute top-4 end-4"><LangToggle /></div>
         <form onSubmit={submit} className="sahaba-auth-card enter w-full max-w-[390px] space-y-5 p-9">
-          <div className="flex items-center gap-3 lg:hidden">
-            <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-[#7c6cff] via-[#5b8cff] to-[#35d6d0]"><Cloud size={20} /></div>
-            <span className="text-2xl font-extrabold tracking-tight text-white">Sahaba</span>
+          <div className="sahaba-auth-mobile flex items-center gap-3 lg:hidden">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#7c6cff] via-[#5b8cff] to-[#35d6d0] shadow-lg shadow-[#6d7cff]/25"><Cloud size={20} /></div>
+            <div className="min-w-0"><p className="text-lg font-extrabold leading-none tracking-tight text-white">Sahaba</p><p className="mt-1 text-[11px] text-[#a9b6d8]">{t('Your drive', 'درايفك المحلي')}</p></div>
           </div>
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-white">{mode === 'login' ? t('Welcome back', 'أهلاً بعودتك') : t('Create a new account', 'اعمل حساب جديد')}</h2>
@@ -81,30 +81,24 @@ export default function Auth({ onAuth }: { onAuth: (user: User) => void }) {
             <label className="block space-y-2">
               <span className="text-xs font-semibold text-[#9eabc9]">{t('Name', 'الاسم')}</span>
               <div className="relative"><UserRound className="absolute start-3 top-3.5 text-[#6d789f]" size={17} />
-                <input className="field ps-10" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('Your name', 'اسمك')} required minLength={2} /></div>
+                <input className="field ps-10" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('Your name', 'اسمك')} required minLength={2} /></div>
             </label>
           )}
           <label className="block space-y-2">
             <span className="text-xs font-semibold text-[#9eabc9]">{t('Email', 'البريد الإلكتروني')}</span>
             <div className="relative"><Mail className="absolute start-3 top-3.5 text-[#6d789f]" size={17} />
-              <input className="field ps-10" type="email" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required /></div>
+              <input className="field ps-10" type="email" dir="ltr" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required /></div>
           </label>
           <label className="block space-y-2">
             <span className="text-xs font-semibold text-[#9eabc9]">{t('Password', 'كلمة المرور')}</span>
             <div className="relative"><LockKeyhole className="absolute start-3 top-3.5 text-[#6d789f]" size={17} />
-              <input className="field ps-10" type="password" dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={8} /></div>
+              <input className="field ps-10" type="password" dir="ltr" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={8} /></div>
           </label>
 
           {error && <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</div>}
           <button className="btn btn-primary w-full py-3.5 text-base" disabled={busy}>
             {busy ? <><span className="spin h-4 w-4 rounded-full border-2 border-[#08101f]/30 border-t-[#08101f]" /> {t('Please wait…', 'جاري...')}</> : <>{mode === 'login' ? t('Sign in', 'دخول') : t('Create account', 'إنشاء الحساب')} <Arrow size={17} /></>}
           </button>
-          <p className="text-center text-xs text-[#8e9cbd]">
-            {mode === 'login' ? t('New here?', 'لسه جديد؟') : t('Already have an account?', 'عندك حساب بالفعل؟')}{' '}
-            <button type="button" className="font-bold text-[#b9c5ff] hover:text-white" onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError('') }}>
-              {mode === 'login' ? t('Create account', 'اعمل حساب') : t('Sign in', 'دخول')}
-            </button>
-          </p>
         </form>
       </div>
     </div>
