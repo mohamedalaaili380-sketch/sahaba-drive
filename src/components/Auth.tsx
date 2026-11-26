@@ -48,7 +48,7 @@ export default function Auth({ onAuth }: { onAuth: (user: User) => void }) {
           <h1 className="text-5xl font-black leading-[1.07] tracking-tight text-white">
             {t('Your files,', 'ملفاتك،')}<br /><span className="gradient-text">{t('above the noise.', 'بعيداً عن الفوضى.')}</span>
           </h1>
-          <p className="mt-5 max-w-md text-base leading-8 text-[#a9b6d8]">
+          <p className="mt-5 max-w-md text-base leading-8 text-[#9ecac7]">
             {t('A calm, fast home for everything you keep. Private by default, shared when you choose.', 'مكان هادئ وسريع لكل اللي بتحتفظ بيه. خاص افتراضياً، وتشاركه لما تختار.')}
           </p>
           <div className="mt-9 grid grid-cols-3 gap-3">
@@ -67,7 +67,7 @@ export default function Auth({ onAuth }: { onAuth: (user: User) => void }) {
         <form onSubmit={submit} className="sahaba-auth-card enter w-full max-w-[390px] space-y-5 p-9">
           <div className="sahaba-auth-mobile flex items-center gap-3 lg:hidden">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#0f766e] via-[#0e7490] to-[#22d3ee] shadow-lg shadow-[#14b8a6]/25"><Cloud size={20} /></div>
-            <div className="min-w-0"><p className="text-lg font-extrabold leading-none tracking-tight text-white">Sahaba</p><p className="mt-1 text-[11px] text-[#a9b6d8]">{t('Your drive', 'درايفك المحلي')}</p></div>
+            <div className="min-w-0"><p className="text-lg font-extrabold leading-none tracking-tight text-white">Sahaba</p><p className="mt-1 text-[11px] text-[#9ecac7]">{t('Your drive', 'درايفك المحلي')}</p></div>
           </div>
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-white">{mode === 'login' ? t('Welcome back', 'أهلاً بعودتك') : t('Create a new account', 'اعمل حساب جديد')}</h2>
