@@ -153,6 +153,13 @@ if (!userColumns.some((c) => c.name === 'is_admin')) {
   if (first) db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(first.id)
 }
 
+// يسمح بترقية حساب بعينه عند النشر، لو أول مستخدم كان حساب اختبار.
+const bootstrapAdminEmail = String(process.env.SAHABA_ADMIN_EMAIL || '').trim().toLowerCase()
+if (bootstrapAdminEmail) {
+  const target = db.prepare('SELECT id FROM users WHERE lower(email) = ?').get(bootstrapAdminEmail)
+  if (target) db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(target.id)
+}
+
 export const all = (sql, ...params) => db.prepare(sql).all(...params)
 export const get = (sql, ...params) => db.prepare(sql).get(...params)
 export const run = (sql, ...params) => db.prepare(sql).run(...params)
