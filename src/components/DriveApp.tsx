@@ -378,10 +378,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
           <button className="ms-auto text-[#8f9bc2] lg:hidden" onClick={() => setSidebar(false)}><X size={18} /></button>
         </div>
 
-        <button className="btn btn-primary mx-4 py-3" disabled={readOnly} title={readOnly ? readOnlyMessage() : undefined} onClick={() => fileInput.current?.click()}><Upload size={17} /> {t('Upload files', 'رفع ملفات')}</button>
-        <button className="btn btn-ghost mx-4 mt-2 py-2.5" disabled={readOnly} title={readOnly ? readOnlyMessage() : undefined} onClick={() => setDialog({ type: 'folder' })}><FolderPlus size={17} /> {t('New folder', 'مجلد جديد')}</button>
-
-        <nav className="scroll-thin mt-5 flex-1 space-y-1 overflow-auto px-3">
+        <nav className="scroll-thin mt-6 flex-1 space-y-1 overflow-auto px-3">
           <p className="sahaba-section-title px-3 pb-1 text-[10px] font-bold">{t('Spaces', 'المساحات')}</p>
           <NavButton icon={Home} label={t('My Drive', 'درايفك')} active={view === 'drive'} onClick={() => navigate('drive')} />
           <NavButton icon={Users} label={t('Departments', 'الإدارات')} active={teamsOpen} onClick={() => setTeamsOpen(true)} badge={spaces.filter((s) => s.kind === 'team').length} />
