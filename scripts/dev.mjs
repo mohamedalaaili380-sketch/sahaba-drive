@@ -15,4 +15,4 @@ function stop() {
 }
 process.on('SIGINT', stop)
 process.on('SIGTERM', stop)
-for (const child of children) child.on('exit', (code) => { if (code) { console.error(`子进程 خرج بـ ${code}`); stop() } })
+for (const child of children) child.on('exit', (code) => { if (code) { console.error(`Child process exited with code ${code}`); stop() } })

@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * عميل مزامنة سطح المكتب لـ Sahaba.
- * يراقب مجلداً محلياً ويرفع أي ملف جديد أو معدّل إلى المساحة المحددة.
+ * Sahaba desktop sync client.
+ * Watches a local folder and uploads new or changed files to the selected space.
  *
- * مثال:
+ * Example:
  *   node sync/client.mjs --dir ./my-drive --email me@example.com --password secret --interval 15
  *
- * المتغيرات البديلة: SAHABA_URL, SAHABA_DIR, SAHABA_EMAIL, SAHABA_PASSWORD, SAHABA_SPACE
+ * Alternative variables: SAHABA_URL, SAHABA_DIR, SAHABA_EMAIL, SAHABA_PASSWORD, SAHABA_SPACE
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -27,7 +27,7 @@ let cookie = ''
 let spaceId = arg('space', process.env.SAHABA_SPACE || '')
 
 if (!EMAIL || !PASSWORD) {
-  console.error('لازم --email و --password (أو SAHABA_EMAIL / SAHABA_PASSWORD)')
+  console.error('--email and --password are required (or SAHABA_EMAIL / SAHABA_PASSWORD)')
   process.exit(1)
 }
 fs.mkdirSync(DIR, { recursive: true })
@@ -52,7 +52,7 @@ async function login() {
     const data = await (await request('/api/spaces')).json()
     spaceId = data.spaces.find((s) => s.kind === 'personal').id
   }
-  console.log(`✓ متصل — المساحة: ${spaceId}`)
+  console.log(`✓ Connected — space: ${spaceId}`)
 }
 
 function loadState() {
@@ -119,10 +119,10 @@ async function sync() {
     state[rel] = fp; uploaded++
   }
   saveState(state)
-  console.log(`[${new Date().toLocaleTimeString('ar-EG')}] فحص ${files.length} ملف — رُفع ${uploaded}`)
+  console.log(`[${new Date().toLocaleTimeString('en-US')}] Checked ${files.length} files — uploaded ${uploaded}`)
 }
 
 await login()
 await sync()
-setInterval(() => sync().catch((e) => console.error('فشل المزامنة:', e.message)), INTERVAL)
-console.log(`العميل شغال — المجلد: ${DIR} — كل ${INTERVAL / 1000} ثانية. اضغط Ctrl+C للإيقاف.`)
+setInterval(() => sync().catch((e) => console.error('Sync failed:', e.message)), INTERVAL)
+console.log(`Client running — folder: ${DIR} — every ${INTERVAL / 1000} seconds. Press Ctrl+C to stop.`)

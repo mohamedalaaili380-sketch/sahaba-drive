@@ -21,7 +21,7 @@ export const routes = [
         VALUES (?,?,?,?,?,?,?,?,?,?)`,
         userId, name, email, hash, salt, now(), DEFAULT_STORAGE_LIMIT, first ? 1 : 0, first ? 1 : 0, first ? 1 : 0)
       run('INSERT INTO spaces (id,kind,name,owner_id,created_at) VALUES (?,?,?,?,?)',
-        spaceId, 'personal', 'درايفي', userId, now())
+        spaceId, 'personal', 'My Drive', userId, now())
       run('INSERT INTO space_members (space_id,user_id,role) VALUES (?,?,?)', spaceId, userId, 'owner')
       const token = first ? setSession(res, userId) : null
       sendJson(res, 201, { user: publicUser(get('SELECT * FROM users WHERE id = ?', userId)), token, pending: !first })

@@ -5,7 +5,6 @@ import type { User } from './types'
 import Auth from './components/Auth'
 import DriveApp from './components/DriveApp'
 import PublicShare from './components/PublicShare'
-import { LangProvider } from './i18n'
 import { ThemeProvider } from './theme'
 
 export default function App() {
@@ -14,6 +13,9 @@ export default function App() {
   const shareMatch = location.pathname.match(/^\/s\/([^/]+)\/?$/)
 
   useEffect(() => {
+    localStorage.removeItem('sahaba_lang')
+    document.documentElement.lang = 'en'
+    document.documentElement.dir = 'ltr'
     if (shareMatch) { setChecking(false); return }
     if (!localStorage.getItem('sahaba_token')) { setChecking(false); return }
     get<{ user: User }>('/auth/me').then((d) => setUser(d.user)).catch(() => {
@@ -31,5 +33,5 @@ export default function App() {
       : !user ? <Auth onAuth={setUser} />
         : <DriveApp user={user} onLogout={() => post('/auth/logout').finally(() => { localStorage.removeItem('sahaba_token'); setUser(null) })} />
 
-  return <LangProvider><ThemeProvider>{content}</ThemeProvider></LangProvider>
+  return <ThemeProvider>{content}</ThemeProvider>
 }

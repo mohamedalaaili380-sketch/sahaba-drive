@@ -1,25 +1,25 @@
-# رفع المشروع على GitHub
+# Publishing the project to GitHub
 
-المجلد ده نسخة نظيفة جاهزة: **من غير `node_modules` ولا `dist` ولا بياناتك المحلية** (`data/`).
-الـ repo اتعمل بالفعل وفيه commit واحد، كل اللي عليك إضافت الـ remote والـ push.
+This folder is a clean, ready-to-push copy: **no `node_modules`, no `dist`, and no local data** (`data/`).
+The repo already exists with one commit; you only need to add a remote and push.
 
-## من سطر الأوامر
+## From the command line
 
 ```bash
 cd sahaba-drive
 
-# 1) اعمل repo جديد فاضي على github.com (من غير README / .gitignore)
-#    و انسخ الرابط اللي هيطلع لك
+# 1) Create an empty repo on github.com (without README / .gitignore)
+#    and copy the URL it gives you.
 
-# 2) اربط الـ remote (بدّل <USER> و <REPO>)
+# 2) Add the remote (replace <USER> and <REPO>)
 git remote add origin https://github.com/<USER>/<REPO>.git
 
-# 3) ادفع
+# 3) Push
 git branch -M main
 git push -u origin main
 ```
 
-لو الـ repo عندك اسمه مختلف أو فيه commits، استخدم:
+If your repo has a different name or already has commits, use:
 
 ```bash
 git remote add origin https://github.com/<USER>/<REPO>.git
@@ -28,19 +28,19 @@ git pull origin main --allow-unrelated-histories
 git push -u origin main
 ```
 
-## من متصفح GitHub (من غير terminals)
+## From the GitHub browser UI (no terminal)
 
-1. افتح [github.com/new](https://github.com/new) واعمل repo جديد.
-2. اسحب ملف `sahaba-drive.zip` أو محتويات المجلد داخل صفحة الـ repo وارفعها.
-3. تأكد إن `.gitignore` موجود في الـ root عشان ما ترفعش `node_modules/` أو `data/`.
+1. Open [github.com/new](https://github.com/new) and create a new repo.
+2. Drag `sahaba-drive.zip` or the folder contents onto the repo page and upload them.
+3. Make sure `.gitignore` is in the root so `node_modules/` and `data/` are not uploaded.
 
-## بعد الرفع
+## After publishing
 
 ```bash
 npm install
-npm run dev     # الواجهة: http://localhost:5173
+npm run dev     # UI: http://localhost:5173
 ```
 
-الـ README داخل المشروع فيه كل التفاصيل (التشغيل، المميزات، عميل المزامنة، المتغيرات).
+The project README has all the details (running, features, sync client, environment variables).
 
-> ملاحظة: بيانات الحسابات والملفات اللي جرّبتها محلياً **مش** مرفوعة — موجودة بس في `cloudbox/data/` في جهازك.
+> Note: local test accounts and files are **not** uploaded — they only exist in `sahaba-drive/data/` on your machine.

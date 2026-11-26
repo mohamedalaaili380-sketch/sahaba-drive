@@ -129,7 +129,7 @@ export const routes = [
         }
         for (const item of active) {
           run('UPDATE items SET parent_id = ?, updated_at = ? WHERE id = ?', target, t, item.id)
-          activity(user.id, item.id, 'item.move', target || 'الجذر')
+          activity(user.id, item.id, 'item.move', target || 'Root')
           broadcastChange(item.space_id, { type: 'updated', item: serializeItem(get('SELECT * FROM items WHERE id = ?', item.id)) })
           count++
         }
@@ -236,21 +236,21 @@ export const routes = [
         itemId = existing.id
         const version = existing.version + 1
         run(`INSERT INTO versions (id,item_id,number,size,blob_path,author_id,note,created_at) VALUES (?,?,?,?,?,?,?,?)`,
-          newId(), itemId, version, size, blobId, user.id, 'رفع ملف جديد', now())
+          newId(), itemId, version, size, blobId, user.id, 'New file uploaded', now())
         run('UPDATE items SET size = ?, mime = ?, version = ?, blob_path = ?, updated_at = ? WHERE id = ?', size, mime, version, blobId, now(), itemId)
         const old = all('SELECT id,blob_path FROM versions WHERE item_id = ? AND number <= ? ORDER BY number DESC', itemId, version - MAX_VERSIONS)
         for (const v of old) {
           run('DELETE FROM versions WHERE id = ?', v.id)
           deleteBlob(v.blob_path)
         }
-        activity(user.id, itemId, 'file.version', `إصدار ${version}: ${name}`)
+        activity(user.id, itemId, 'file.version', `Version ${version}: ${name}`)
       } else {
         itemId = newId()
         run(`INSERT INTO items (id,space_id,owner_id,parent_id,kind,name,mime,size,blob_path,version,created_at,updated_at)
              VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
           itemId, spaceId, user.id, parentId, 'file', name, mime, size, blobId, 1, now(), now())
         run(`INSERT INTO versions (id,item_id,number,size,blob_path,author_id,note,created_at) VALUES (?,?,?,?,?,?,?,?)`,
-          newId(), itemId, 1, size, blobId, user.id, 'الإصدار الأول', now())
+          newId(), itemId, 1, size, blobId, user.id, 'First version', now())
         activity(user.id, itemId, 'file.upload', name)
       }
       const item = serializeItem(get('SELECT * FROM items WHERE id = ?', itemId))
@@ -271,12 +271,12 @@ export const routes = [
       const blobId = saved.id
       const version = item.version + 1
       run('INSERT INTO versions (id,item_id,number,size,blob_path,author_id,note,created_at) VALUES (?,?,?,?,?,?,?,?)',
-        newId(), item.id, version, buffer.length, blobId, user.id, String(body.note || 'تحرير داخل التطبيق'), now())
+        newId(), item.id, version, buffer.length, blobId, user.id, String(body.note || 'Edited in the app'), now())
       run('UPDATE items SET size = ?, version = ?, blob_path = ?, updated_at = ?, mime = ? WHERE id = ?',
         buffer.length, version, blobId, now(), item.mime || 'text/plain', item.id)
       const old = all('SELECT id,blob_path FROM versions WHERE item_id = ? AND number <= ? ORDER BY number DESC', item.id, version - MAX_VERSIONS)
       for (const v of old) { run('DELETE FROM versions WHERE id = ?', v.id); deleteBlob(v.blob_path) }
-      activity(user.id, item.id, 'file.edit', `إصدار ${version}`)
+      activity(user.id, item.id, 'file.edit', `Version ${version}`)
       const updated = serializeItem(get('SELECT * FROM items WHERE id = ?', item.id))
       broadcastChange(item.space_id, { type: 'updated', item: updated, content: text })
       emit('doc:changed', { itemId: item.id, content: text, author: user.id, version })
@@ -323,7 +323,7 @@ export const routes = [
           if (get('SELECT id FROM items WHERE parent_id = ? AND name = ? AND deleted_at IS NULL AND id != ?', target, item.name, item.id)) fail(409, 'فيه عنصر بنفس الاسم في الوجهة')
         }
         run('UPDATE items SET parent_id = ?, updated_at = ? WHERE id = ?', target, now(), item.id)
-        activity(user.id, item.id, 'item.move', target || 'الجذر')
+        activity(user.id, item.id, 'item.move', target || 'Root')
       }
       if ('tagIds' in body && Array.isArray(body.tagIds)) {
         const ids = body.tagIds.filter((t) => get('SELECT id FROM tags WHERE id = ? AND user_id = ?', t, user.id))
@@ -364,7 +364,7 @@ export const routes = [
         if (!item.deleted_at) fail(400, 'امسح العنصر الأول للسلة')
         const blobs = all(`SELECT blob_path FROM versions WHERE item_id IN (${ids.map(() => '?').join(',')})`, ...ids)
         run(`DELETE FROM items WHERE id IN (${ids.map(() => '?').join(',')})`, ...ids)
-        // لا نحذف blob إلا لو مفيش نسخة تانية (النسخ/الاستعارة بتشارك نفس الملف)
+        // Only delete the blob when no other version references it (copies/restores share the same file).
         for (const b of blobs) {
           if (!get('SELECT 1 FROM versions WHERE blob_path = ? LIMIT 1', b.blob_path)) deleteBlob(b.blob_path)
         }
@@ -402,7 +402,7 @@ export const routes = [
       let name = item.name
       if (get('SELECT id FROM items WHERE parent_id IS ? AND name = ? AND deleted_at IS NULL', target, name)) {
         const dot = name.lastIndexOf('.')
-        name = dot > 0 ? `${name.slice(0, dot)} (نسخة)${name.slice(dot)}` : `${name} (نسخة)`
+        name = dot > 0 ? `${name.slice(0, dot)} (copy)${name.slice(dot)}` : `${name} (copy)`
       }
       const newItemId = newId()
       run(`INSERT INTO items (id,space_id,owner_id,parent_id,kind,name,mime,size,blob_path,version,description,created_at,updated_at)
@@ -411,7 +411,7 @@ export const routes = [
       if (item.kind === 'file') {
         for (const v of all('SELECT * FROM versions WHERE item_id = ?', item.id)) {
           run('INSERT INTO versions (id,item_id,number,size,blob_path,author_id,note,created_at) VALUES (?,?,?,?,?,?,?,?)',
-            newId(), newItemId, v.number, v.size, v.blob_path, user.id, `نسخة من ${item.name}`, now())
+            newId(), newItemId, v.number, v.size, v.blob_path, user.id, `Copy of ${item.name}`, now())
         }
       } else {
         copyChildren(item.id, newItemId, item.space_id, user.id)
@@ -445,7 +445,7 @@ export const routes = [
       const blobId = saved.id
       const number = item.version + 1
       run('INSERT INTO versions (id,item_id,number,size,blob_path,author_id,note,created_at) VALUES (?,?,?,?,?,?,?,?)',
-        newId(), item.id, number, version.size, blobId, user.id, `استعادة الإصدار ${version.number}`, now())
+        newId(), item.id, number, version.size, blobId, user.id, `Restored version ${version.number}`, now())
       run('UPDATE items SET size = ?, version = ?, updated_at = ?, blob_path = ? WHERE id = ?', version.size, number, now(), blobId, item.id)
       activity(user.id, item.id, 'version.restore', `${version.number} ← ${number}`)
       const updated = serializeItem(get('SELECT * FROM items WHERE id = ?', item.id))
@@ -481,7 +481,7 @@ function copyChildren(fromId, toId, spaceId, userId) {
     if (child.kind === 'file') {
       for (const v of all('SELECT * FROM versions WHERE item_id = ?', child.id)) {
         run('INSERT INTO versions (id,item_id,number,size,blob_path,author_id,note,created_at) VALUES (?,?,?,?,?,?,?,?)',
-          newId(), id, v.number, v.size, v.blob_path, userId, 'نسخة', now())
+          newId(), id, v.number, v.size, v.blob_path, userId, 'Copy', now())
       }
     } else copyChildren(child.id, id, spaceId, userId)
   }

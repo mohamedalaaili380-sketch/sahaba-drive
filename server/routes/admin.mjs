@@ -85,7 +85,7 @@ export const routes = [
     const target = get('SELECT * FROM users WHERE id = ?', params.id) || fail(404, 'المستخدم غير موجود')
     if (!target.approved) {
       run('UPDATE users SET approved = 1 WHERE id = ?', target.id)
-      notify(target.id, 'account.approved', 'تم تفعيل حسابك — تقدر تدخل دلوقتي', null)
+      notify(target.id, 'account.approved', 'Your account has been approved — you can sign in now.', null)
     }
     sendJson(res, 200, { user: adminUser(get('SELECT * FROM users WHERE id = ?', target.id)) })
   } },
@@ -109,7 +109,7 @@ export const routes = [
     const { salt, hash } = hashPassword(password)
     run('UPDATE users SET password_hash = ?, salt = ? WHERE id = ?', hash, salt, target.id)
     run('DELETE FROM sessions WHERE user_id = ?', target.id)
-    notify(target.id, 'password.reset', 'غيّر المدير كلمة المرور الخاصة بك', null)
+    notify(target.id, 'password.reset', 'The admin changed your password.', null)
     sendJson(res, 200, { password })
   } },
 
@@ -155,7 +155,7 @@ export const routes = [
       run('INSERT INTO spaces (id,kind,name,owner_id,created_at) VALUES (?,?,?,?,?)', newId(), 'personal', space.name, space.owner_id, now())
     }
     cleanupBlobs(blobs)
-    for (const id of members) notify(id, 'space.remove', `تم حذف المساحة «${space.name}»`, null)
+    for (const id of members) notify(id, 'space.remove', `The space "${space.name}" was deleted.`, null)
     emit('space:changed', { spaceId: space.id, type: 'deleted' })
     sendJson(res, 200, { ok: true })
   } },

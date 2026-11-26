@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", "Cairo", "Segoe UI", system-ui, sans-serif;
+  --font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
   --color-ink-950: #03252c;
   --color-ink-900: #062f36;
   --color-ink-800: #0b3d45;
@@ -13,7 +13,7 @@
 
 :root {
   color-scheme: dark;
-  font-family: "Inter", "Cairo", "Segoe UI", system-ui, sans-serif;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
   background: #03252c;
   color: #e6fffb;
 }
@@ -123,7 +123,6 @@ a { color: #0f766e; }
 .sahaba-main .sahaba-search input::placeholder { color: #5b7e80 !important; }
 .sahaba-main .sahaba-iconbtn { background: #fff !important; border: 1px solid #d6ecec !important; color: #416b6e !important; border-radius: 12px; }
 .sahaba-main .sahaba-iconbtn:hover { background: #eef9f8 !important; }
-.sahaba-main .sahaba-lang button { color: #416b6e !important; }
 .sahaba-main .sahaba-toolbar { background: #fff !important; border-color: #d6ecec !important; color: #0f2e33 !important; }
 .sahaba-main .sahaba-toolbar button { color: #0f2e33 !important; }
 .sahaba-main .sahaba-toolbar button.sahaba-danger { color: #e11d48 !important; }
@@ -142,7 +141,6 @@ a { color: #0f766e; }
 .sahaba-hero-sub { margin-top: 6px; font-size: 13px; color: #5b7e80; }
 .sahaba-hero-cta { padding: .75rem 1.15rem; font-size: .9rem; }
 .sahaba-hero-status { color: #5b7e80; font-size: 11px; white-space: nowrap; }
-[dir="rtl"] .sahaba-eyebrow { letter-spacing: 0; }
 
 .sahaba-live { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,.14); }
 .sahaba-live.on { background: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,.14); }
@@ -293,8 +291,6 @@ a { color: #0f766e; }
 .sahaba-main .btn-ghost:hover:not(:disabled) { border-color: #bfe0de !important; }
 
 .sahaba-banner-track > div { background: linear-gradient(90deg, rgba(255,255,255,.9), #8be9e2) !important; box-shadow: 0 0 10px rgba(139,233,226,.35) !important; }
-.sahaba-main .sahaba-lang button { background: #f7fdfc !important; border: 1px solid #d6ecec !important; border-radius: 10px; padding: .4rem .6rem; }
-.sahaba-main .sahaba-lang button:hover { border-color: #7fded4 !important; color: #0f766e !important; }
 .sahaba-main .sahaba-popover { box-shadow: 0 20px 50px rgba(20,29,58,.16) !important; border-radius: 16px !important; }
 .sahaba-main .sahaba-popover button:hover { background: #eef9f8 !important; }
 .sahaba-auth-card { box-shadow: 0 30px 70px rgba(2,6,20,.45), inset 0 1px 0 rgba(255,255,255,.1) !important; }
@@ -388,9 +384,7 @@ a { color: #0f766e; }
 [data-theme="dark"] .sahaba-main .sahaba-search:focus-within { border-color: #2dd4bf !important; box-shadow: 0 0 0 3px rgba(45,212,191,.14) !important; background: #07343b !important; }
 [data-theme="dark"] .sahaba-main .sahaba-iconbtn { background: #07343b !important; border-color: rgba(94,234,212,.16) !important; color: #bfe9e6 !important; }
 [data-theme="dark"] .sahaba-main .sahaba-iconbtn:hover { background: #0b3d45 !important; }
-[data-theme="dark"] .sahaba-main .sahaba-lang button,
 [data-theme="dark"] .sahaba-main .sahaba-theme button { background: #07343b !important; border: 1px solid rgba(94,234,212,.16) !important; color: #bfe9e6 !important; }
-[data-theme="dark"] .sahaba-main .sahaba-lang button:hover,
 [data-theme="dark"] .sahaba-main .sahaba-theme button:hover { background: #0b3d45 !important; border-color: #2dd4bf !important; color: #fff !important; }
 [data-theme="dark"] .sahaba-main .sahaba-toolbar { background: #062f36 !important; border-color: rgba(94,234,212,.12) !important; color: #e6fffb !important; }
 [data-theme="dark"] .sahaba-main .sahaba-toolbar button { color: #e6fffb !important; }

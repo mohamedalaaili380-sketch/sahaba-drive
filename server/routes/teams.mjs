@@ -55,7 +55,7 @@ export const routes = [
     run(`INSERT INTO space_members (space_id,user_id,role) VALUES (?,?,?)
       ON CONFLICT(space_id,user_id) DO UPDATE SET role = excluded.role`, params.id, target.id, role)
     const space = get('SELECT name FROM spaces WHERE id = ?', params.id)
-    notify(target.id, 'team.invite', `تمت إضافتك لفريق «${space.name}» بدور ${role === 'editor' ? 'محرر' : 'قارئ'}`, null)
+    notify(target.id, 'team.invite', `You were added to the department "${space.name}" as ${role === 'editor' ? 'editor' : 'viewer'}.`, null)
     notifySpace(params.id, 'team:members', { id: params.id })
     sendJson(res, 200, { ok: true })
   } },
@@ -69,7 +69,7 @@ export const routes = [
       AND id NOT IN (SELECT user_id FROM space_members WHERE space_id = ?)`, space.owner_id, params.id)
     for (const target of targets) {
       run('INSERT INTO space_members (space_id,user_id,role) VALUES (?,?,?)', params.id, target.id, role)
-      notify(target.id, 'team.invite', `تمت إضافتك لفريق «${space.name}» بدور ${role === 'editor' ? 'محرر' : 'قارئ'}`, null)
+      notify(target.id, 'team.invite', `You were added to the department "${space.name}" as ${role === 'editor' ? 'editor' : 'viewer'}.`, null)
     }
     if (targets.length) notifySpace(params.id, 'team:members', { id: params.id })
     sendJson(res, 200, { count: targets.length })
@@ -88,7 +88,7 @@ export const routes = [
     assertAccess(user.id, params.id, 'owner')
     if (params.userId === user.id) fail(400, 'المالك مش ممكن يتشال')
     run('DELETE FROM space_members WHERE space_id = ? AND user_id = ?', params.id, params.userId)
-    notify(params.userId, 'team.remove', 'تمت إزالتك من الفريق', null)
+    notify(params.userId, 'team.remove', 'You were removed from the department.', null)
     notifySpace(params.id, 'team:members', { id: params.id })
     sendJson(res, 200, { ok: true })
   } },
@@ -108,7 +108,7 @@ export const routes = [
     for (const b of blobs) {
       if (!get('SELECT 1 FROM versions WHERE blob_path = ? LIMIT 1', b.blob_path)) deleteBlob(b.blob_path)
     }
-    for (const id of members.filter((id) => id !== user.id)) notify(id, 'team.remove', 'تم حذف الفريق', null)
+    for (const id of members.filter((id) => id !== user.id)) notify(id, 'team.remove', 'The department was deleted.', null)
     sendJson(res, 200, { ok: true })
   } },
   { method: 'GET', pattern: /^\/api\/shared$/, handler({ req, res }) {

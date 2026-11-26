@@ -32,7 +32,7 @@ function serveStatic(req, res, pathname) {
   const dist = path.join(ROOT, 'dist')
   if (!fs.existsSync(dist)) {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' })
-    res.end('<h1 dir="rtl">الواجهة لسه مت-build&#64;ها — شغّل <code>npm run dev</code> أو <code>npm run build</code></h1>')
+    res.end('<h1>The interface has not been built yet — run <code>npm run dev</code> or <code>npm run build</code></h1>')
     return
   }
   let filePath = path.resolve(dist, '.' + pathname)

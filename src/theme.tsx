@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { Moon, Sun } from 'lucide-react'
-import { useT } from './i18n'
 
 export type Theme = 'light' | 'dark'
 const STORAGE_KEY = 'sahaba_theme'
@@ -49,11 +48,8 @@ export const useTheme = () => useContext(ThemeContext)
 
 export function ThemeToggle({ floating = false }: { floating?: boolean }) {
   const { theme, toggleTheme } = useTheme()
-  const t = useT()
   const dark = theme === 'dark'
-  const label = dark
-    ? t('Switch to light mode', 'التبديل للوضع الفاتح')
-    : t('Switch to dark mode', 'التبديل للوضع الداكن')
+  const label = dark ? 'Switch to light mode' : 'Switch to dark mode'
   const Icon = dark ? Sun : Moon
 
   return (
@@ -64,7 +60,7 @@ export function ThemeToggle({ floating = false }: { floating?: boolean }) {
       aria-pressed={dark}
       onClick={toggleTheme}
       className={floating
-        ? 'fixed bottom-4 end-16 z-50 flex items-center gap-1.5 rounded-full border border-white/15 bg-[#03252c]/95 px-3 py-2 text-xs font-bold text-[#bfe9e6] shadow-xl backdrop-blur transition hover:border-[#2dd4bf] hover:text-white'
+        ? 'fixed bottom-4 end-4 z-50 flex items-center gap-1.5 rounded-full border border-white/15 bg-[#03252c]/95 px-3 py-2 text-xs font-bold text-[#bfe9e6] shadow-xl backdrop-blur transition hover:border-[#2dd4bf] hover:text-white'
         : 'flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-xs font-bold text-[#86b8b5] transition hover:bg-white/10 hover:text-white'}
     >
       <Icon size={16} />

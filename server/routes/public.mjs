@@ -104,7 +104,7 @@ export const routes = [
     if (!text) fail(400, 'اكتب تعليق أولاً')
     const id = newId()
     run('INSERT INTO comments (id,item_id,user_id,author_name,body,created_at) VALUES (?,?,?,?,?,?)',
-      id, item.id, null, String(body.name || 'ضيف').slice(0, 60), text, now())
+      id, item.id, null, String(body.name || 'Guest').slice(0, 60), text, now())
     sendJson(res, 201, { comment: get(`SELECT c.*, c.author_name FROM comments c WHERE c.id = ?`, id) })
   } },
 ]

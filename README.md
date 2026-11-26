@@ -1,225 +1,226 @@
-# ☁️ Sahaba — درايفك المحلي
+# ☁️ Sahaba — Your drive
 
-تطبيق تخزين ملفات مبني من الصفر كبديل عملي يجمع مميزات Google Drive و OneDrive و Dropbox. البيانات الوصفية في SQLite، ومحتوى الملفات إما على قرص السيرفر أو على Google Drive عبر Apps Script — من غير مفاتيح API أو قاعدة بيانات خارجية.
+A file-storage app built from scratch as a practical alternative to Google Drive, OneDrive, and Dropbox. Metadata lives in SQLite, while file content lives either on the server disk or on Google Drive through Apps Script — no API keys and no external database.
 
-> المشروع القديم `درايفي` (Next.js + GCS) لسه في مجلدات `src/` و `legacy/` في الـ repo الأصلي ولم يتعدّل عليه أي تعديل.
+> The old Drive project (Next.js + GCS) remains in the `src/` and `legacy/` folders of the original repo and has not been modified.
 
 ---
 
-## المميزات
+## Features
 
-| Feature | التفاصيل |
+| Feature | Details |
 | --- | --- |
-| **سجل الإصدارات** | كل رفع/تحرير ينشئ إصدار جديد. استعراض، تنزيل أي إصدار، استعادة كإصدار جديد، وحذف الإصدارات القديمة تلقائياً بعد 50 إصدار. |
-| **تحرير وتعليقات** | محرر نصوص/ماركداون مع حفظ تلقائي، إشعارات تعاون، تعليقات على الملفات، وحضور مباشر (من متصل بالملف). |
-| **فرق ومساحات مشتركة** | إنشاء فرق، أدوار (مالك / محرر / قارئ)، إضافة أعضاء بالبريد، إشعارات دعوة، ومساحة لكل فريق. |
-| **وسوم وبحث متقدم** | وسوم ملوّنة + بحث بالاسم والوصف ونوع الملف والوسم والتاريخ والحجم والمفضلة مع ترتيب مختلف. |
-| **حماية الروابط** | رابط عام بصلاحية (معاينة / تنزيل / تعليق)، كلمة سر، تاريخ انتهاء، حد للمشاهدات والتنزيلات، سجل للأحداث، وإلغاء الرابط. |
-| **تطبيقات سطح المكتب والموبايل** | PWA قابل للتثبيت على كل المنصات + عميل مزامنة سطح المكتب (`sync/client.mjs`) يرفع مجلد محلي تلقائياً. |
-| **الأساسيات** | رفع بالسحب والإفلات، مجلدات، نسخ/نقل/إعادة تسمية، مفضلة، سلة مهملات واستعادة، معاينة صور/فيديو/صوت/PDF/نصوص، وواجهة عربية RTL متجاوبة. |
-| **مباشر (Realtime)** | WebSocket للتحديثات والإشعارات والتعليقات وحالة الاتصال — بدون polling. |
-| **إجراءات جماعية** | تحديد أكتر من عنصر (Ctrl/Shift + نقرة أو Ctrl+A) وتنزيل/مفضلة/وسوم/نقل/حذف أو استعادة في طلب واحد. |
-| **مراقبة وصيانة** | `/api/health` لفحص SQLite و Drive، نسخة احتياطية دورية لـ SQLite، وتحديد لمعدل الطلبات لكل IP. |
+| **Version history** | Every upload/edit creates a new version. Browse it, download any version, restore it as a new version, and automatically prune versions older than 50. |
+| **Editing and comments** | Text/Markdown editor with autosave, collaboration notifications, file comments, and live presence. |
+| **Departments and shared spaces** | Create departments with owner/editor/viewer roles, add members by email, send invite notifications, and give every department its own space. Quick-create and “Add all” are available from the sidebar. |
+| **Tags and advanced search** | Colored tags plus search by name, description, type, tag, date, size, and starred state, with multiple sort options. |
+| **Protected links** | Public links with view/download/comment permissions, password protection, expiry, view and download limits, an activity log, and revocation. |
+| **Desktop and mobile apps** | Installable PWA on every platform plus a desktop sync client (`sync/client.mjs`) that uploads a local folder automatically. |
+| **Fundamentals** | Drag-and-drop uploads, folders, copy/move/rename, starred files, trash and restore, image/video/audio/PDF/text previews, and a responsive English-only interface with light and dark themes. |
+| **Realtime** | WebSocket updates for changes, notifications, comments, and connection status — no polling. |
+| **Bulk actions** | Select multiple items (Ctrl/Shift + click or Ctrl+A) and download, star, tag, move, delete, or restore them in one request. |
+| **Monitoring and maintenance** | `/api/health` checks SQLite and Drive, periodic SQLite backups, and per-IP rate limiting. |
 
 ---
 
-## التشغيل
+## Running it
 
-المطلوب: **Node.js 22.5+** (تم التطوير والاختبار على Node 26 — `node:sqlite` مدمج، مفيش حاجة لـ `better-sqlite3`).
+Requirements: **Node.js 22.5+** (developed and tested on Node 26 — `node:sqlite` is built in, so `better-sqlite3` is not needed).
 
 ```bash
-cd cloudbox
+cd sahaba-drive
 npm install
 npm run dev
 ```
 
-افتح **http://localhost:5173** واعمل حساب جديد. أول مستخدم يبقى ليه مساحة خاصة فوراً.
+Open **http://localhost:5173** and create an account. New accounts need approval from the main admin before they can sign in.
 
-أو للإنتاج:
+For production:
 
 ```bash
 npm run build
-npm start          # http://localhost:4000 — يقدّم الواجهة والـ API معاً
+npm start          # http://localhost:4000 — serves the UI and API together
 ```
 
-### الأوامر
+### Commands
 
-| الأمر | الوصف |
+| Command | Description |
 | --- | --- |
-| `npm run dev` | يشغّل الـ API على 4000 و Vite على 5173 مع proxy. |
-| `npm run build` | بناء الواجهة في `dist/`. |
-| `npm start` | تشغيل السيرفر في وضع الإنتاج (يقدّم `dist/`). |
-| `npm run typecheck` | فحص TypeScript. |
+| `npm run dev` | Runs the API on port 4000 and Vite on 5173 with a proxy. |
+| `npm run build` | Builds the frontend into `dist/`. |
+| `npm start` | Runs the production server (serves `dist/`). |
+| `npm run typecheck` | Runs TypeScript checks. |
 
-### المتغيرات (كلها اختيارية)
+### Environment variables (all optional)
 
-| المتغير | الافتراضي | الوصف |
+| Variable | Default | Description |
 | --- | --- | --- |
-| `PORT` | `4000` | منفذ الـ API / الإنتاج. |
-| `HOST` | `0.0.0.0` | عنوان الربط. |
-| `SAHABA_DATA_DIR` | `./data` | مجلد قاعدة البيانات (وملفات `blobs/` في الوضع المحلي). |
-| `SAHABA_MAX_UPLOAD_MB` | `4096` / `20` في وضع Drive | أقصى حجم ملف مرفوع. |
-| `SAHABA_MAX_VERSIONS` | `50` | عدد الإصدارات المحتفظة بكل ملف. |
-| `SAHABA_STORAGE_LIMIT_MB` | `10240` | مساحة كل مستخدم. |
-| `SAHABA_STORAGE_MODE` | `local` / `drive` | يختار محتوى الملفات: قرص السيرفر أو Google Drive. وجود `SAHABA_DRIVE_WEBAPP_URL` يفعّل `drive` تلقائياً. |
-| `SAHABA_DRIVE_WEBAPP_URL` | — | رابط `/exec` لتطبيق Apps Script الخاص بحساب Drive الحالي. |
-| `SAHABA_DRIVE_TOKEN` | — | التوكن السري المطابق للتوكن داخل `Code.gs` للحساب الحالي. |
-| `SAHABA_DRIVE_MIGRATE_FROM_URL` | — | رابط `/exec` لحساب Drive القديم. ضبطه يعمل نقل لمرة واحدة عند إقلاع السيرفر. |
-| `SAHABA_DRIVE_MIGRATE_FROM_TOKEN` | — | توكن الـ Web App القديم. مطلوب مع المتغير اللي قبله؛ يُحذف هو والرابط بعد النقل. |
-| `SAHABA_BACKUP_ENABLED` | `1` | تفعيل النسخ الاحتياطي الدوري لـ SQLite (`0` للإيقاف). |
-| `SAHABA_BACKUP_INTERVAL_HOURS` | `24` | كل ساعة/ساعات بيتم أخذ نسخة جديدة. |
-| `SAHABA_BACKUP_INITIAL_DELAY_MS` | `15000` | تأخير أول نسخة بعد الإقلاع (مفيد للاختبار). |
-| `SAHABA_BACKUP_RETENTION` | `7` | عدد النسخ المحتفظ بها؛ الأقدم تُحذف تلقائياً. |
-| `SAHABA_BACKUP_SPACE` | `backups` | مجلد Drive الذي تستقبل النسخ: `sahaba-drive-storage-backups`. |
-| `SAHABA_RATE_WINDOW_MS` | `60000` | نافذة تحديد معدل الطلبات لكل IP. |
-| `SAHABA_RATE_MAX` | `120` | أقصى طلبات لكل IP في النافذة (عدا المصادقة والـ health). |
-| `SAHABA_AUTH_RATE_WINDOW_MS` | `600000` | نافذة طلبات الدخول/التسجيل. |
-| `SAHABA_AUTH_RATE_MAX` | `10` | أقصى محاولات دخول/تسجيل لكل IP في النافذة. |
+| `PORT` | `4000` | API / production port. |
+| `HOST` | `0.0.0.0` | Bind address. |
+| `SAHABA_DATA_DIR` | `./data` | Database folder (and `blobs/` in local mode). |
+| `SAHABA_MAX_UPLOAD_MB` | `4096` / `20` in Drive mode | Maximum upload size. |
+| `SAHABA_MAX_VERSIONS` | `50` | Versions retained per file. |
+| `SAHABA_STORAGE_LIMIT_MB` | `10240` | Storage quota per user. |
+| `SAHABA_STORAGE_MODE` | `local` / `drive` | Chooses file content storage: server disk or Google Drive. Setting `SAHABA_DRIVE_WEBAPP_URL` automatically enables `drive`. |
+| `SAHABA_DRIVE_WEBAPP_URL` | — | `/exec` URL of the Apps Script Web App for the current Drive account. |
+| `SAHABA_DRIVE_TOKEN` | — | Secret token matching `SAHABA_TOKEN` inside `Code.gs`. |
+| `SAHABA_DRIVE_MIGRATE_FROM_URL` | — | `/exec` URL of an older Web App. Setting this triggers a one-time blob migration at startup. |
+| `SAHABA_DRIVE_MIGRATE_FROM_TOKEN` | — | Token for the old Web App. Required with the previous variable; both are removed after migration. |
+| `SAHABA_BACKUP_ENABLED` | `1` | Enables periodic SQLite backups (`0` disables). |
+| `SAHABA_BACKUP_INTERVAL_HOURS` | `24` | Hours between backups. |
+| `SAHABA_BACKUP_INITIAL_DELAY_MS` | `15000` | Delay before the first backup (useful for testing). |
+| `SAHABA_BACKUP_RETENTION` | `7` | Number of backups retained; older ones are deleted automatically. |
+| `SAHABA_BACKUP_SPACE` | `backups` | Drive folder that receives backups: `sahaba-drive-storage-backups`. |
+| `SAHABA_RATE_WINDOW_MS` | `60000` | Per-IP rate-limit window. |
+| `SAHABA_RATE_MAX` | `120` | Maximum requests per IP per window (except auth and health). |
+| `SAHABA_AUTH_RATE_WINDOW_MS` | `600000` | Login/registration rate-limit window. |
+| `SAHABA_AUTH_RATE_MAX` | `10` | Maximum login/registration attempts per IP per window. |
+| `SAHABA_ADMIN_EMAIL` | — | Email promoted to main admin at startup. Set this to your account email before first launch. |
 
 ---
 
-## تخزين الملفات على Google Drive (Apps Script)
+## Storing files on Google Drive (Apps Script)
 
-البيانات الوصفية (المستخدمون، الإصدارات، التعليقات، الوسوم، المشاركات) تفضل في SQLite.
-محتوى الملفات بس بيتخزن في مجلدات `sahaba-drive-storage-*` داخل Google Drive عبر Apps Script Web App.
+Metadata (users, versions, comments, tags, shares) stays in SQLite.
+Only file content is stored in `sahaba-drive-storage-*` folders in Google Drive through an Apps Script Web App.
 
-1. افتح [Google Apps Script](https://script.google.com)، أنشئ مشروع و الصق محتوى `apps-script/Code.gs`.
-2. من **Project Settings → Script Properties** أضف خاصية اسمها `SAHABA_TOKEN` وقيمتها توكن عشوائي طويل (`node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"`). التوكن مش مكتوب في الكود.
-3. Deploy → New deployment → Web app: **Execute as Me** و **Who has access: Anyone**.
-4. ضع رابط `/exec` في `SAHABA_DRIVE_WEBAPP_URL` ونفس التوكن في `SAHABA_DRIVE_TOKEN`، ثم أعد تشغيل السيرفر.
-5. جرّب: `curl "<WEBAPP_URL>?token=<TOKEN>&action=ping"` → لازم يرجع `{"ok":true,...}`.
+1. Open [Google Apps Script](https://script.google.com), create a project, and paste the contents of `apps-script/Code.gs`.
+2. In **Project Settings → Script Properties**, add a property named `SAHABA_TOKEN` with a long random value (`node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"`). The token is not written in the source code.
+3. Deploy → New deployment → Web app: **Execute as Me** and **Who has access: Anyone**.
+4. Put the `/exec` URL in `SAHABA_DRIVE_WEBAPP_URL` and the same token in `SAHABA_DRIVE_TOKEN`, then restart the server.
+5. Test it: `curl "<WEBAPP_URL>?token=<TOKEN>&action=ping"` should return `{"ok":true,...}`.
 
-> التوكن سري؛ أي حد يعرفه (مع الرابط) يقدر يرفع/ينزّل/يمسح blobs في Drive. خزّنه في Script Properties وفي متغيرات بيئة السيرفر فقط — مش في الـ repo.
-> حد الرفع العملي في وضع Drive هو 20MB للملف (حد URL Fetch في Apps Script = 50MB، والـ base64 يكبّر الحجم ~33%).
+> The token is secret. Anyone who knows it (along with the URL) can upload, download, and delete blobs in Drive. Keep it in Script Properties and server environment variables only — never in the repo.
+> The practical upload limit in Drive mode is 20MB per file (Apps Script URL Fetch limit is 50MB and base64 adds roughly 33%).
 
-### نقل الملفات من Drive قديم إلى Drive جديد
+### Migrating blobs from an old Drive account to a new one
 
-البيانات الوصفية في SQLite ما تتحركش؛ اللي بيتنقل هو محتوى الملفات (الـ blobs) ومعرّفاتها داخل قاعدة البيانات.
+SQLite metadata does not move; only file content (the blobs) and the IDs stored in the database are migrated.
 
-1. اعمل Deploy للـ Web App الجديد وحدّث `SAHABA_DRIVE_WEBAPP_URL` و `SAHABA_DRIVE_TOKEN` بالرابط والتوكن الجديدين.
-2. أضف `SAHABA_DRIVE_MIGRATE_FROM_URL` و `SAHABA_DRIVE_MIGRATE_FROM_TOKEN` للـ Web App القديم (لا تحذفه أو تؤرشفه قبل ما النقل يخلص).
-3. أعد تشغيل السيرفر مرة واحدة. عند الإقلاع بيُنزّل كل blob من الحساب القديم، يرفعه على الجديد، ثم يحدّث `items.blob_path` و `versions.blob_path` في معاملة SQLite واحدة. هتلاقي في السجل:
+1. Deploy the new Web App and update `SAHABA_DRIVE_WEBAPP_URL` and `SAHABA_DRIVE_TOKEN` with the new URL and token.
+2. Add `SAHABA_DRIVE_MIGRATE_FROM_URL` and `SAHABA_DRIVE_MIGRATE_FROM_TOKEN` for the old Web App (do not delete or archive it until migration finishes).
+3. Restart the server once. At startup it downloads every blob from the old account, uploads it to the new one, then updates `items.blob_path` and `versions.blob_path` in a single SQLite transaction. You will see:
    ```
-   ☁️  تم نقل N ملف إلى Drive الجديد
+   ☁️  Migrated N files to the new Drive
    ```
-4. بعد ما النقل ينجح وتتأكد إن التنزيل شغال، **احذف المتغيرين `SAHABA_DRIVE_MIGRATE_*`** وأعد التشغيل عشان النقل ما يتكررش.
+4. After the migration succeeds and downloads are verified, **remove the two `SAHABA_DRIVE_MIGRATE_*` variables** and restart so the migration does not run again.
 
-> فشل أي ملف أثناء النقل يخلي المعرّفات القديمة كما هي والسيرفر **ما يبدأش** (عشان ما يترفعش ملف جديد على الحساب الجديد والقديم لسه مستخدم). أعد المحاولة بعد إصلاح السبب. بعد نجاح النقل، الملفات الجديدة بتترفع على الحساب الجديد مباشرة.
+> If any file fails during migration, old IDs are left untouched and the server **does not start** (to avoid uploading to the new account while the old one is still in use). Fix the cause and try again. After a successful migration, new files go directly to the new account.
 
-### فحص الصحة (Health check)
+### Health check
 
-`GET /api/health` متاح للعامة ويرجع حالة SQLite والـ Web App وآخر نسخة احتياطية:
+`GET /api/health` is public and returns the state of SQLite, the Web App, and the latest backup:
 
 ```bash
 curl https://sahaba-drive.de.deplexo.com/api/health
 ```
 
-الرد بيشمل `ok`, `db`, `drive.ok`, `drive.latencyMs`, `backup`. لو قاعدة البيانات أو Drive مش سليمين، حالة الرد تبقى `503`.
+The response includes `ok`, `db`, `drive.ok`, `drive.latencyMs`, and `backup`. If SQLite or Drive is unhealthy, the status code is `503`.
 
-### نسخ SQLite الاحتياطي
+### SQLite backups
 
-- أول نسخة بعد 15 ثانية من الإقلاع، وبعدها كل `SAHABA_BACKUP_INTERVAL_HOURS`.
-- في وضع Drive تترفع نسخة `.sqlite` في مجلد `sahaba-drive-storage-backups` — وفي الوضع المحلي تتنقل إلى `data/backups/`.
-- عدد النسخ محكوم بـ `SAHABA_BACKUP_RETENTION`، والأقدم تُحذف تلقائياً.
-- النسخة مأخوذة بـ `VACUUM INTO`، يعني لقطة متسقة حتى لو كان فيه WAL.
+- The first backup runs 15 seconds after startup, then every `SAHABA_BACKUP_INTERVAL_HOURS`.
+- In Drive mode a `.sqlite` backup is uploaded to `sahaba-drive-storage-backups`; in local mode it is written to `data/backups/`.
+- Retention is controlled by `SAHABA_BACKUP_RETENTION`; older backups are deleted automatically.
+- Backups use `VACUUM INTO`, so they are consistent snapshots even with WAL enabled.
 
-### تحديد معدل الطلبات
+### Rate limiting
 
-- كل طلبات `/api/` (عدا `/api/health`) محدودة بـ `SAHABA_RATE_MAX` في `SAHABA_RATE_WINDOW_MS` لكل IP.
-- `/api/auth/login` و `/api/auth/register` ليهم حد أشد: `SAHABA_AUTH_RATE_MAX` في `SAHABA_AUTH_RATE_WINDOW_MS`.
-- عند التجاوز الرد بيبقى `429` مع `Retry-After`، وكل رد بيحمل هيدرات `x-ratelimit-*`.
-- خلف reverse proxy زي Deplexo بيتم استخدام `x-forwarded-for` لتحديد عنوان العميل.
-
----
-
-## أين توجد بياناتك؟
-
-```
-cloudbox/data/
-├── sahaba.sqlite     # المستخدمون، الملفات، الإصدارات، الوسوم، التعليقات، المشاركات...
-└── blobs/            # محتوى الملفات في الوضع المحلي فقط (اسم كل ملف = UUID)
-```
-
-في الوضع المحلي كل شيء على جهازك ومفيش طلبات لخدمات خارجية. في وضع Drive محتوى الملفات بيتخزن في مجلدات `sahaba-drive-storage-*` داخل Drive، وSQLite بيخزّن معرّفات الملفات بس. لو حذفت مجلد `data/` في الوضع المحلي هتبدأ من الصفر.
-
-كلمات المرور مخزّنة كـ scrypt مع salt عشوائي، والجلسات cookies بـ HttpOnly + SameSite.
+- All `/api/` requests except `/api/health` are limited to `SAHABA_RATE_MAX` per `SAHABA_RATE_WINDOW_MS` per IP.
+- `/api/auth/login` and `/api/auth/register` have a stricter limit: `SAHABA_AUTH_RATE_MAX` per `SAHABA_AUTH_RATE_WINDOW_MS`.
+- Exceeding a limit returns `429` with `Retry-After`, and every response includes `x-ratelimit-*` headers.
+- Behind a reverse proxy such as Deplexo, `x-forwarded-for` is used to identify the client.
 
 ---
 
-## تثبيت التطبيق على الموبايل / سطح المكتب (PWA)
+## Where is your data?
 
-1. شغّل التطبيق بـ `npm run build` ثم `npm start` (أو افتح dev URL).
-2. من متصفح Chrome/Edge: قائمة ⋮ → **Install app / تثبيت التطبيق**.
-3. من iPhone Safari: مشاركة → **Add to Home Screen**.
+```
+sahaba-drive/data/
+├── sahaba.sqlite     # Users, files, versions, tags, comments, shares...
+└── blobs/            # File content in local mode only (each filename is a UUID)
+```
 
-التطبيق هيفتح كنافذة مستقلة ويقدر يشتغل offline للواجهة (الشل) — الملفات نفسها لازم السيرفر يكون شغال عشان توصلها.
+In local mode everything stays on your machine and no external services are called. In Drive mode file content lives in `sahaba-drive-storage-*` folders in Drive, and SQLite stores only file IDs. Deleting `data/` in local mode starts from scratch.
 
-## عميل مزامنة سطح المكتب
+Passwords are stored with scrypt and a random salt; sessions use HttpOnly + SameSite cookies.
 
-عميل Node بسيط يراقب مجلد على جهازك ويرفع أي ملف جديد أو معدّل إلى مساحتك تلقائياً:
+---
+
+## Installing the app on mobile / desktop (PWA)
+
+1. Run the app with `npm run build` then `npm start` (or open the dev URL).
+2. In Chrome/Edge: menu ⋮ → **Install app**.
+3. On iPhone Safari: Share → **Add to Home Screen**.
+
+The app opens as a standalone window and the shell can work offline — the files themselves require the server to be running.
+
+## Desktop sync client
+
+A small Node client watches a local folder and automatically uploads new or changed files to your space:
 
 ```bash
 node sync/client.mjs \
   --dir ./my-drive \
   --email you@example.com \
-  --password 'كلمة المرور' \
+  --password 'your-password' \
   --interval 15
 ```
 
-أو بالمتغيرات: `SAHABA_DIR`, `SAHABA_EMAIL`, `SAHABA_PASSWORD`, `SAHABA_SPACE`, `SAHABA_URL`.
+Or use environment variables: `SAHABA_DIR`, `SAHABA_EMAIL`, `SAHABA_PASSWORD`, `SAHABA_SPACE`, `SAHABA_URL`.
 
-العميل بينشئ مجلدات الـ remote بنفس هيكل المجلد المحلي، وبيخزّن بصمة الملفات في `.sahaba-sync.json` عشان ما يرفعش نفس الملف مرتين. كل رفع بيعمل إصدار جديد في السجل.
+The client creates remote folders matching the local structure and stores file fingerprints in `.sahaba-sync.json` so it does not upload the same file twice. Every upload creates a new version in the history.
 
 ---
 
-## هيكل الكود
+## Code structure
 
 ```
-cloudbox/
+sahaba-drive/
 ├── server/
 │   ├── index.mjs             # HTTP server + routing + static + production
-│   ├── config.mjs            # إعدادات المسارات والبيئة ووضع التخزين
-│   ├── db.mjs                # مخطط SQLite (node:sqlite)
-│   ├── storage.mjs           # تخزين الـ blobs: محلي أو Google Drive
-│   ├── migrate.mjs           # نقل الـ blobs من Web App قديم لجديد (مرة واحدة)
-│   ├── backup.mjs            # نسخ SQLite الاحتياطي إلى Drive أو مجلد محلي
-│   ├── rate-limit.mjs        # تحديد معدل الطلبات لكل IP
-│   ├── util.mjs              # مصادقة، صلاحيات، تخزين، أحداث
+│   ├── config.mjs            # Paths, environment, and storage mode
+│   ├── db.mjs                # SQLite schema (node:sqlite)
+│   ├── storage.mjs           # Blob storage: local or Google Drive
+│   ├── migrate.mjs           # One-time blob migration from an old Web App to a new one
+│   ├── backup.mjs            # SQLite backups to Drive or a local folder
+│   ├── rate-limit.mjs        # Per-IP rate limiting
+│   ├── util.mjs              # Auth, permissions, storage, events
 │   └── routes/
 │       ├── health.mjs        # GET /api/health
-│       ├── auth.mjs          # تسجيل / دخول / ملف شخصي
-│       ├── items.mjs         # ملفات، مجلدات، رفع، إصدارات، سلة
-│       ├── collab.mjs        # WS، تعليقات، وسوم، إشعارات، بحث
-│       ├── teams.mjs         # فرق وأعضاء ومشاركة معك
-│       ├── shares.mjs        # روابط المشاركة (جهة المالك)
-│       └── public.mjs        # الوصول العام للروابط
+│       ├── auth.mjs          # Register / login / profile
+│       ├── items.mjs         # Files, folders, upload, versions, trash
+│       ├── collab.mjs        # WS, comments, tags, notifications, search
+│       ├── teams.mjs         # Departments, members, shared-with-me
+│       ├── shares.mjs        # Owner-side public links
+│       └── public.mjs        # Public access to links
 ├── src/
-│   ├── App.tsx               # توجيه بسيط: تسجيل / درايف / رابط عام
+│   ├── App.tsx               # Simple routing: auth / drive / public link
 │   ├── api.ts / types.ts
 │   ├── components/
 │   │   ├── Auth.tsx / DriveApp.tsx / PublicShare.tsx
-│   │   ├── Dialogs.tsx       # مشاركة، إصدارات، وسوم، فرق، بحث متقدم
-│   │   ├── Viewers.tsx       # معاينة، محرر، تعليقات
+│   │   ├── Dialogs.tsx       # Share, versions, tags, departments, advanced search
+│   │   ├── Viewers.tsx       # Preview, editor, comments
 │   │   └── ui.tsx
-│   └── styles.css            # Tailwind 4 + ثيم RTL
-├── sync/client.mjs            # عميل مزامنة سطح المكتب
-└── public/                    # manifest + service worker + أيقونة
+│   └── styles.css            # Tailwind 4 + Ocean Teal light/dark theme
+├── sync/client.mjs            # Desktop sync client
+└── public/                    # Manifest, service worker, icon
 ```
 
 ---
 
-## حدود مقصودة (مهم عشان تكون الصورة واضحة)
+## Intentional limitations (for clarity)
 
-- **التعاون**: حالياً تحرير مستندات نصية مع حفظ تلقائي + إشعارات مباشرة وحضور. مش محرر CRDT متعدد المؤلفين في نفس اللحظة (زي Google Docs) — ده مشروع أكبر لوحده.
-- **الموبايل**: PWA قابل للتثبيت، مش binary أصلي لـ App Store / Google Play.
-- **المزامنة**: عميل سطح المكتب يرفع تغييراتك للسحابة (One-way). المزامنة العكسية (تنزيل تلقائي للجهاز) مش مدمجة؛ تقدر تنزّل من الواجهة أو تضيفها بسهولة في `sync/client.mjs`.
-- **الأمان**: التطبيق مصمم للاستخدام المحلي/الداخلي. لو هتنشره على الإنترنت، ضعه خلف Reverse proxy مع HTTPS، واضبط `SAHABA_STORAGE_LIMIT_MB`، وفكّر في إضافة Rate limiting و CSRF token للـ endpoints الحساسة.
+- **Collaboration**: Currently text-document editing with autosave, instant notifications, and presence — not a multi-author CRDT editor like Google Docs. That is a larger project on its own.
+- **Mobile**: Installable PWA, not a native App Store / Google Play binary.
+- **Sync**: The desktop client uploads your changes to the cloud (one-way). Reverse sync (automatic download to disk) is not built in; download from the UI or add it to `sync/client.mjs`.
+- **Security**: Designed for local/internal use. If you publish it on the internet, put it behind an HTTPS reverse proxy, tune `SAHABA_STORAGE_LIMIT_MB`, and consider adding rate limiting and CSRF tokens to sensitive endpoints.
 
 ---
 
-## استكشاف الأخطاء
+## Troubleshooting
 
-- `node:sqlite` مش متاح → حدّث Node لـ 22.5+ (يفضّل 26).
-- المنفذ 4000 مستخدم → `PORT=4001 npm start` (لازم تغيّر proxy في `vite.config.ts` لو شغّال dev).
-- الرفع فشل → تأكد إن `data/blobs/` قابل للكتابة وإن `SAHABA_MAX_UPLOAD_MB` مناسب.
-- الرابط العام بيطلب كلمة سر → استخدم زر "فتح الرابط"، والـ grant بيتخزّن في sessionStorage للجلسة دي.
+- `node:sqlite` unavailable → update Node to 22.5+ (26 preferred).
+- Port 4000 already in use → `PORT=4001 npm start` (also change the proxy in `vite.config.ts` when running dev).
+- Uploads fail → make sure `data/blobs/` is writable and `SAHABA_MAX_UPLOAD_MB` is appropriate.
+- A public link asks for a password → use the **Unlock** button; the grant is stored in `sessionStorage` for the session.
