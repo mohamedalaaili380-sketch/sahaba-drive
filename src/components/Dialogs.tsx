@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Copy, Check, Link2, Lock, CalendarClock, Eye, Download, Trash2, History, RotateCcw, Tag as TagIcon, Users, UserPlus, Search, X, Plus, Crown, Folder } from 'lucide-react'
 import { del, formatBytes, formatDate, get, patch, post } from '../api'
 import type { Item, Share, Tag, Space, Version } from '../types'
@@ -296,7 +296,7 @@ export function BulkTagsDialog({ tags, count, onSave, onChange, onClose }: {
   )
 }
 
-export function TeamsDialog({ onClose, onChange, notify }: { onClose: () => void; onChange: () => void; notify: (t: string, k?: 'ok' | 'err') => void }) {
+export function TeamsDialog({ onClose, onChange, notify, focusCreate = false }: { onClose: () => void; onChange: () => void; notify: (t: string, k?: 'ok' | 'err') => void; focusCreate?: boolean }) {
   const t = useT()
   const [teams, setTeams] = useState<Space[]>([])
   const [name, setName] = useState('')
@@ -304,11 +304,24 @@ export function TeamsDialog({ onClose, onChange, notify }: { onClose: () => void
   const [detail, setDetail] = useState<any>(null)
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('editor')
+  const [creating, setCreating] = useState(false)
+  const nameRef = useRef<HTMLInputElement>(null)
   const load = () => get<{ teams: Space[] }>('/teams').then((d) => { setTeams(d.teams); if (selected && !d.teams.find((team) => team.id === selected)) setSelected(null) })
   useEffect(() => { load() }, [])
   useEffect(() => { if (selected) get(`/teams/${selected}`).then((d: any) => setDetail(d.team)) }, [selected])
+  useEffect(() => { if (focusCreate) nameRef.current?.focus() }, [focusCreate])
+  async function createDepartment() {
+    const value = name.trim()
+    if (!value || creating) return
+    setCreating(true)
+    try {
+      const { team } = await post<{ team: Space }>('/teams', { name: value })
+      setName(''); await load(); setSelected(team.id); onChange()
+      notify(t('Department created', 'تم إنشاء الإدارة'), 'ok')
+    } catch (e: any) { notify(e.message, 'err') } finally { setCreating(false) }
+  }
   return (
-    <Modal title={t('Teams and shared spaces', 'الفرق والمساحات المشتركة')} wide onClose={onClose}>
+    <Modal title={t('Departments and shared spaces', 'الإدارات والمساحات المشتركة')} wide onClose={onClose}>
       <div className="grid gap-5 md:grid-cols-[220px_1fr]">
         <div className="space-y-2">
           {teams.map((team) => (
@@ -317,17 +330,16 @@ export function TeamsDialog({ onClose, onChange, notify }: { onClose: () => void
               {team.role === 'owner' && <Crown size={13} className="ms-auto text-amber-400" />}
             </button>
           ))}
-          {teams.length === 0 && <p className="text-sm text-[#7f8bb4]">{t('No teams yet.', 'لسه مفيش فرق.')}</p>}
+          {teams.length === 0 && <p className="text-sm text-[#7f8bb4]">{t('No departments yet.', 'لسه مفيش إدارات.')}</p>}
           <div className="flex gap-2 pt-2">
-            <input className="field py-2 text-xs" value={name} onChange={(e) => setName(e.target.value)} placeholder={t('New team name', 'اسم فريق جديد')} />
-            <button className="btn btn-primary px-3 py-2" onClick={async () => {
-              if (!name.trim()) return
-              try { const { team } = await post<{ team: Space }>('/teams', { name }); setName(''); await load(); setSelected(team.id); onChange(); notify(t('Team created', 'تم إنشاء الفريق'), 'ok') } catch (e: any) { notify(e.message, 'err') }
-            }}><Plus size={16} /></button>
+            <input ref={nameRef} className="field py-2 text-xs" value={name} onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') void createDepartment() }}
+              placeholder={t('New department name', 'اسم إدارة جديدة')} />
+            <button className="btn btn-primary px-3 py-2" disabled={creating} title={t('Create department', 'إنشاء إدارة')} onClick={() => void createDepartment()}><Plus size={16} /></button>
           </div>
         </div>
         <div>
-          {!selected ? <div className="grid h-full min-h-48 place-items-center text-center text-sm text-[#7f8bb4]">{t('Choose a team or create a new one', 'اختر فريق أو اعمل فريق جديد')}</div> : detail && <>
+          {!selected ? <div className="grid h-full min-h-48 place-items-center text-center text-sm text-[#7f8bb4]">{t('Choose a department or create a new one', 'اختر إدارة أو اعمل إدارة جديدة')}</div> : detail && <>
             <div className="flex items-center justify-between">
               <h4 className="text-lg font-bold">{detail.name}</h4>
               <span className="text-xs text-[#8d99c2]">{detail.role === 'owner' ? t('You are the owner', 'أنت المالك') : detail.role === 'editor' ? t('Editor', 'محرر') : t('Viewer', 'قارئ')}</span>
@@ -347,21 +359,33 @@ export function TeamsDialog({ onClose, onChange, notify }: { onClose: () => void
                 </div>
               ))}
             </div>
-            {detail.role === 'owner' && <div className="mt-4 flex gap-2">
+            {detail.role === 'owner' && <div className="mt-4 rounded-xl border border-[#6d7cff]/30 bg-[#6d7cff]/10 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-bold text-white">{t('Bring everyone in', 'أدخل كل المستخدمين')}</p>
+                  <p className="mt-0.5 text-[11px] text-[#a8b5d8]">
+                    {(detail.eligible || 0) > 0
+                      ? t('{n} approved users are not members yet', '{n} مستخدم مفعّل لسه مش عضو', { n: detail.eligible })
+                      : t('All approved users are already members', 'كل المستخدمين المفعّلين أعضاء بالفعل')}
+                  </p>
+                </div>
+                <button className="btn btn-primary px-3 py-2" disabled={!detail.eligible} onClick={async () => {
+                  try {
+                    const { count } = await post<{ count: number }>(`/teams/${selected}/members/all`, { role })
+                    await load()
+                    const fresh: any = await get(`/teams/${selected}`)
+                    setDetail(fresh.team)
+                    notify(t('Added {n} users', 'تمت إضافة {n} مستخدم', { n: count }), 'ok')
+                  } catch (e: any) { notify(e.message, 'err') }
+                }}><Users size={15} /> {detail.eligible ? `${t('Add all', 'إضافة الكل')} (${detail.eligible})` : t('All added', 'تمت الإضافة')}</button>
+              </div>
+            </div>}
+            {detail.role === 'owner' && <div className="mt-3 flex gap-2">
               <input className="field py-2 text-xs" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('Member email', 'بريد العضو')} />
               <select className="rounded-xl border border-white/10 bg-[#0a1020] px-2 text-xs" value={role} onChange={(e) => setRole(e.target.value)}><option value="editor">{t('Editor', 'محرر')}</option><option value="viewer">{t('Viewer', 'قارئ')}</option></select>
               <button className="btn btn-primary px-3 py-2" onClick={async () => {
                 try { await post(`/teams/${selected}/members`, { email, role }); setEmail(''); setDetail({ ...detail, members: [...detail.members, { id: 'new', name: email.split('@')[0], email, color: '#6d7cff', role }] }); notify(t('Added', 'تمت الإضافة'), 'ok') } catch (e: any) { notify(e.message, 'err') }
               }}><UserPlus size={15} /></button>
-              <button className="btn btn-ghost px-3 py-2" title={t('Add every approved user to this team', 'إضافة كل المستخدمين المفعّلين للفريق')} onClick={async () => {
-                try {
-                  const { count } = await post<{ count: number }>(`/teams/${selected}/members/all`, { role })
-                  await load()
-                  const fresh: any = await get(`/teams/${selected}`)
-                  setDetail(fresh.team)
-                  notify(t('Added {n} users', 'تمت إضافة {n} مستخدم', { n: count }), 'ok')
-                } catch (e: any) { notify(e.message, 'err') }
-              }}><Users size={15} /> {t('Add all', 'إضافة الكل')}</button>
             </div>}
           </>}
         </div>

@@ -31,7 +31,10 @@ export const routes = [
     const space = get('SELECT * FROM spaces WHERE id = ?', params.id)
     const members = all(`SELECT u.id,u.name,u.email,u.color,m.role FROM space_members m
       JOIN users u ON u.id = m.user_id WHERE m.space_id = ? ORDER BY m.role, u.name`, space.id)
-    sendJson(res, 200, { team: { ...space, role, members } })
+    const eligible = get(`SELECT COUNT(*) AS c FROM users
+      WHERE approved = 1 AND id != ?
+      AND id NOT IN (SELECT user_id FROM space_members WHERE space_id = ?)`, space.owner_id, space.id).c
+    sendJson(res, 200, { team: { ...space, role, members, eligible } })
   } },
   { method: 'PATCH', pattern: /^\/api\/teams\/(?<id>[^/]+)$/, handler({ req, res, params, body }) {
     const user = requireUser(req)

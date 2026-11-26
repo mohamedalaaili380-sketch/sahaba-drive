@@ -53,6 +53,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
   const [sidebar, setSidebar] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [teamsOpen, setTeamsOpen] = useState(false)
+  const [teamsFocusCreate, setTeamsFocusCreate] = useState(false)
   const [adminOpen, setAdminOpen] = useState(false)
   const [notifOpen, setNotifOpen] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -383,7 +384,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
         <nav className="scroll-thin mt-5 flex-1 space-y-1 overflow-auto px-3">
           <p className="sahaba-section-title px-3 pb-1 text-[10px] font-bold">{t('Spaces', 'المساحات')}</p>
           <NavButton icon={Home} label={t('My Drive', 'درايفك')} active={view === 'drive'} onClick={() => navigate('drive')} />
-          <NavButton icon={Users} label={t('Teams', 'الفرق')} active={teamsOpen} onClick={() => setTeamsOpen(true)} badge={spaces.filter((s) => s.kind === 'team').length} />
+          <NavButton icon={Users} label={t('Departments', 'الإدارات')} active={teamsOpen} onClick={() => setTeamsOpen(true)} badge={spaces.filter((s) => s.kind === 'team').length} />
           <NavButton icon={Share2} label={t('Shared with me', 'مشاركة معك')} active={view === 'shared'} onClick={() => navigate('shared')} />
           <p className="sahaba-section-title px-3 pb-1 pt-5 text-[10px] font-bold">{t('Categories', 'التصنيفات')}</p>
           <NavButton icon={Star} label={t('Starred', 'المفضلة')} active={view === 'starred'} onClick={() => navigate('starred')} />
@@ -395,7 +396,12 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: tag.color }} /><span className="truncate">{tag.name}</span>
             </button>
           ))}
-          <p className="sahaba-section-title px-3 pb-1 pt-5 text-[10px] font-bold">{t('Team spaces', 'مساحات الفرق')}</p>
+          <div className="flex items-center gap-1 px-3 pb-1 pt-5">
+            <p className="sahaba-section-title flex-1 text-[10px] font-bold">{t('Departments', 'الإدارات')}</p>
+            <button className="rounded-lg p-1 text-[#8f9bc2] transition hover:bg-white/5 hover:text-white"
+              title={t('New department', 'إدارة جديدة')}
+              onClick={() => { setTeamsFocusCreate(true); setTeamsOpen(true) }}><Plus size={14} /></button>
+          </div>
           {spaces.filter((s) => s.kind === 'team').map((s) => (
             <button key={s.id} onClick={() => navigate('drive', { space: s.id })} className={`sahaba-nav flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${view === 'drive' && spaceId === s.id ? 'active' : ''}`}>
               <Users size={16} className="text-[#9aa9ff]" /><span className="truncate">{displaySpace(s.name)}</span>
@@ -428,7 +434,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
             <span className="sahaba-lang"><LangToggle /></span>
             <button className="sahaba-iconbtn relative rounded-xl p-2.5" title={t('Notifications', 'الإشعارات')} onClick={() => setNotifOpen(!notifOpen)}><Bell size={19} />
               {unread > 0 && <span className="absolute -start-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">{unread}</span>}</button>
-            <button className="sahaba-iconbtn hidden rounded-xl p-2.5 sm:block" title={t('Teams', 'الفرق')} onClick={() => setTeamsOpen(true)}><Users size={19} /></button>
+            <button className="sahaba-iconbtn hidden rounded-xl p-2.5 sm:block" title={t('Departments', 'الإدارات')} onClick={() => setTeamsOpen(true)}><Users size={19} /></button>
             {user.isSuperAdmin && <button className="sahaba-iconbtn hidden rounded-xl p-2.5 sm:block" title={t('Admin console', 'لوحة التحكم')} onClick={() => setAdminOpen(true)}><ShieldCheck size={19} /></button>}
           </div>
 
@@ -643,7 +649,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
         onMove={(parentId) => runBulk('move', { parentId }, (n) => t('Moved {n} items', 'تم نقل {n} عنصر', { n }))} />}
       {searchOpen && <SearchDialog tags={tags} initial={filters || { q: query } as any} onClose={() => setSearchOpen(false)}
         onSearch={(f) => { setFilters(f); setQuery(f.q); setView('search') }} />}
-      {teamsOpen && <TeamsDialog onClose={() => { setTeamsOpen(false); loadShell() }} onChange={loadShell} notify={notify} />}
+      {teamsOpen && <TeamsDialog focusCreate={teamsFocusCreate} onClose={() => { setTeamsOpen(false); setTeamsFocusCreate(false); loadShell() }} onChange={loadShell} notify={notify} />}
       {adminOpen && <AdminPanel currentUser={user} onClose={() => setAdminOpen(false)} notify={notify} onUsersChanged={loadShell} />}
       {preview && <Preview item={preview} onClose={() => setPreview(null)} onEdit={() => { setEditor(preview); setPreview(null) }}
         onVersions={() => { setDialog({ type: 'versions', item: preview }); setPreview(null) }}
@@ -657,7 +663,7 @@ function NavButton({ icon: Icon, label, active, onClick, badge }: { icon: any; l
   const t = useT()
   return <button onClick={onClick} className={`sahaba-nav flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${active ? 'active' : ''}`}>
     <Icon size={17} className={active ? 'text-[#aab6ff]' : ''} /><span className="truncate">{label}</span>
-    {!!badge && <span className="ms-auto rounded-full bg-white/10 px-2 py-0.5 text-[10px]" title={t('Teams', 'الفرق')}>{badge}</span>}
+    {!!badge && <span className="ms-auto rounded-full bg-white/10 px-2 py-0.5 text-[10px]" title={t('Departments', 'الإدارات')}>{badge}</span>}
   </button>
 }
 
