@@ -161,7 +161,7 @@ export default function AdminPanel({ currentUser, onClose, notify, onUsersChange
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2"><p className="truncate text-sm font-bold">{s.name}</p>
-                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-[#9aa6ce]">{s.kind === 'personal' ? t('Personal', 'شخصية') : t('Team', 'فريق')}</span></div>
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-[#9aa6ce]">{s.kind === 'personal' ? t('Personal', 'شخصية') : t('Department', 'إدارة')}</span></div>
                 <p className="truncate text-[11px] text-[#8591ba]">{s.owner?.name || '—'} · {t('{n} members', '{n} أعضاء', { n: number(s.members) })} · {t('{n} files', '{n} ملف', { n: number(s.files) })} · {formatBytes(s.size)}</p>
               </div>
               {confirmDelete === s.id
