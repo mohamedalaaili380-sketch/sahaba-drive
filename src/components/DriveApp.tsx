@@ -386,13 +386,16 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
           <p className="sahaba-section-title px-3 pb-1 pt-5 text-[10px] font-bold">{t('Categories', 'التصنيفات')}</p>
           <NavButton icon={Star} label={t('Starred', 'المفضلة')} active={view === 'starred'} onClick={() => navigate('starred')} />
           <NavButton icon={Clock} label={t('Trash', 'سلة المهملات')} active={view === 'trash'} onClick={() => navigate('trash')} />
-          {user.isSuperAdmin && <NavButton icon={ShieldCheck} label={t('Admin console', 'لوحة التحكم')} active={adminOpen} onClick={() => setAdminOpen(true)} />}
           {tags.length > 0 && <p className="sahaba-section-title px-3 pb-1 pt-5 text-[10px] font-bold">{t('Tags', 'الوسوم')}</p>}
           {tags.map((tag) => (
             <button key={tag.id} onClick={() => navigate('tag', { tag: tag.id })} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${view === 'tag' && tagFilter === tag.id ? 'bg-[#6d7cff2e] text-white' : 'text-[#9ca8d0] hover:bg-white/5'}`}>
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: tag.color }} /><span className="truncate">{tag.name}</span>
             </button>
           ))}
+          {user.isSuperAdmin && <>
+            <p className="sahaba-section-title px-3 pb-1 pt-5 text-[10px] font-bold">{t('Admin', 'الإدارة')}</p>
+            <NavButton icon={ShieldCheck} label={t('Admin console', 'لوحة التحكم')} active={adminOpen} onClick={() => setAdminOpen(true)} />
+          </>}
           <div className="flex items-center gap-1 px-3 pb-1 pt-5">
             <p className="sahaba-section-title flex-1 text-[10px] font-bold">{t('Departments', 'الإدارات')}</p>
             <button className="rounded-lg p-1 text-[#8f9bc2] transition hover:bg-white/5 hover:text-white"
@@ -505,7 +508,12 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
           {dragging && <div className="sahaba-drop pointer-events-none absolute inset-0 z-20 grid place-items-center text-xl font-bold"><Upload size={40} className="mb-3" /> {t('Drop files to upload', 'أفلت الملفات للرفع')}</div>}
           {!loading && view === 'drive' && !folderId && items.length > 0 && <div className="sahaba-banner mb-5 flex items-center gap-4 rounded-2xl px-5 py-4 text-white">
             <div className="sahaba-banner-icon grid h-10 w-10 shrink-0 place-items-center rounded-xl"><Upload size={19} /></div>
-            <div className="min-w-0"><b className="block text-[13px]">{t('Your files are safely in your drive', 'ملفاتك محفوظة بأمان في درايفك')}</b><span className="mt-1 block text-[11px]">{formatBytes(used)} / {formatBytes(user.storageLimit)} · {t('Synced automatically', 'مزامنة تلقائياً')}</span></div>
+            <div className="min-w-0"><b className="block text-[13px]">{t('Your files are safely in your drive', 'ملفاتك محفوظة بأمان في درايفك')}</b>
+              <span className="mt-1 block text-[11px]">{formatBytes(used)} / {formatBytes(user.storageLimit)} · {t('Synced automatically', 'مزامنة تلقائياً')}</span>
+              <div className="sahaba-banner-track mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
+                <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, Math.round((used / Math.max(user.storageLimit, 1)) * 100))}%` }} />
+              </div>
+            </div>
             <span className="ms-auto shrink-0 rounded-full bg-white/15 px-3 py-1.5 text-[11px]">{t('All good', 'كل تمام')}</span>
           </div>}
           <div className="sahaba-empty-wrap" aria-busy={loading}>
