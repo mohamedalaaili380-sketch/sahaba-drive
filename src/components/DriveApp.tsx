@@ -511,7 +511,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
             <div className="min-w-0"><b className="block text-[13px]">{t('Your files are safely in your drive', 'ملفاتك محفوظة بأمان في درايفك')}</b>
               <span className="mt-1 block text-[11px]">{formatBytes(used)} / {formatBytes(user.storageLimit)} · {t('Synced automatically', 'مزامنة تلقائياً')}</span>
               <div className="sahaba-banner-track mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
-                <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, Math.round((used / Math.max(user.storageLimit, 1)) * 100))}%` }} />
+                <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(2, Math.min(100, Math.round((used / Math.max(user.storageLimit, 1)) * 100)))}%` }} />
               </div>
             </div>
             <span className="ms-auto shrink-0 rounded-full bg-white/15 px-3 py-1.5 text-[11px]">{t('All good', 'كل تمام')}</span>
