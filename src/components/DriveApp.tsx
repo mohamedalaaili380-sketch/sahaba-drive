@@ -259,11 +259,22 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
     if (!list.length) return
     if (readOnlySpace()) return notify(readOnlyMessage(), 'err')
     const target = { space: spaceId, parent: view === 'drive' ? folderId : null }
+    let redirected = false
     for (const file of list) {
       setUploads((current) => [...current, { name: file.name, pct: 0 }])
       try {
-        await uploadFile(file, target.space, target.parent, (pct) => setUploads((current) => current.map((x) => x.name === file.name ? { ...x, pct } : x)))
+        const result = await uploadFile(file, target.space, target.parent, (pct) => setUploads((current) => current.map((x) => x.name === file.name ? { ...x, pct } : x)))
         notify(t('Uploaded {name}', 'تم رفع {name}', { name: file.name }), 'ok')
+        const saved = result?.item
+        if (saved?.space_id && (saved.space_id !== target.space || saved.parent_id !== target.parent)) {
+          setSpaceId(saved.space_id)
+          setView('drive')
+          setFolderId(saved.parent_id || null)
+          if (!redirected) {
+            notify(t('Saved in My Drive so you can see it', 'اتحفظ في درايفك عشان تشوفه'), 'ok')
+            redirected = true
+          }
+        }
       } catch (e: any) { notify(`${file.name}: ${e.message}`, 'err') }
       finally { setUploads((current) => current.filter((x) => x.name !== file.name)) }
     }
