@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "سَحابة — تخزين ملفات محلي شامل: إصدارات، تعاون، فرق، وسوم، مشاركة محمية، وتطبيقات قابلة للتثبيت",
+  "description": "Sahaba — cloud drive with versions, teams, tags, protected sharing and installable apps",
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "server": "node server/index.mjs",

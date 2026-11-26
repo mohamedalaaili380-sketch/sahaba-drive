@@ -1,9 +1,9 @@
 {
-  "name": "سَحابة — درايفك المحلي",
-  "short_name": "سَحابة",
-  "description": "تخزين ومشاركة الملفات مع إصدارات وفرق وتعليقات",
-  "lang": "ar",
-  "dir": "rtl",
+  "name": "Sahaba — Your drive",
+  "short_name": "Sahaba",
+  "description": "Store, share and collaborate on files with versions, teams and comments",
+  "lang": "en",
+  "dir": "ltr",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -13,7 +13,7 @@
     { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ],
   "shortcuts": [
-    { "name": "درايفك", "url": "/" },
-    { "name": "سلة المهملات", "url": "/?view=trash" }
+    { "name": "My Drive", "url": "/" },
+    { "name": "Trash", "url": "/?view=trash" }
   ]
 }

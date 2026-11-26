@@ -1,5 +1,5 @@
 /**
- * سَحابة — Google Drive blob storage bridge (Apps Script Web App)
+ * Sahaba — Google Drive blob storage bridge (Apps Script Web App)
  * Deploy: Execute as me | Access: Anyone.
  * Before deploying, add a Script Property named SAHABA_TOKEN with a long random secret
  * (Project Settings → Script Properties) and use the same value in the server env var.

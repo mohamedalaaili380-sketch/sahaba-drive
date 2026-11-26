@@ -90,7 +90,7 @@ export default function PublicShare({ token }: { token: string }) {
     <div className="min-h-full overflow-auto bg-[#080c18]">
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-white/10 bg-[#0c1224]/90 px-5 py-3 backdrop-blur">
         <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-[#6d7cff] to-[#a855f7]"><Cloud size={19} /></div>
-        <span className="gradient-text text-lg font-extrabold">سَحابة</span>
+        <span className="gradient-text text-lg font-extrabold tracking-tight">Sahaba</span>
         <div className="ms-auto flex gap-2">
           {share.allowComments && <button className="btn btn-ghost px-3 py-1.5" onClick={() => setShowComments(true)}><MessageSquare size={15} /> {t('Comments ({n})', 'تعليقات ({n})', { n: comments.length })}</button>}
           {canDownload && <a className="btn btn-primary px-3 py-1.5" href={contentUrlFor(undefined, true)}><Download size={15} /> {t('Download', 'تنزيل')}</a>}

@@ -1,4 +1,4 @@
-# ☁️ سَحابة — صورة نشر تعمل على أي منصة تدعم Dockerfile
+# ☁️ Sahaba — deployment image for any Dockerfile-compatible platform
 FROM node:26-bookworm-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./

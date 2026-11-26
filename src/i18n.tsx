@@ -36,7 +36,7 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     document.documentElement.lang = lang
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
-    document.title = lang === 'ar' ? 'سَحابة — درايفك المحلي' : 'سَحابة — Your drive'
+    document.title = 'Sahaba — ' + (lang === 'ar' ? 'درايفك المحلي' : 'Your drive')
     localStorage.setItem(STORAGE_KEY, lang)
   }, [lang])
 

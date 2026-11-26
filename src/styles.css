@@ -43,7 +43,7 @@ input:focus, textarea:focus, select:focus { outline: none; }
   transition: .16s ease; cursor: pointer; border: 1px solid transparent; white-space: nowrap;
 }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
-.btn-primary { background: linear-gradient(135deg, #6d7cff, #8b5cf6); color: white; box-shadow: 0 6px 20px #6d7cff33; }
+.btn-primary { background: linear-gradient(100deg, #7c6cff, #35d6d0); color: #08101f; box-shadow: 0 10px 24px rgba(89,92,220,.28); }
 .btn-primary:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
 .btn-ghost { background: rgba(255,255,255,.045); color: #cbd5f5; border-color: rgba(255,255,255,.08); }
 .btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,.1); }
@@ -87,3 +87,75 @@ input:focus, textarea:focus, select:focus { outline: none; }
 
 textarea { resize: vertical; }
 a { color: #a5b4ff; }
+
+/* Sahaba — refreshed light workspace */
+.sahaba-shell { background: #f5f7fc !important; color: #1a2340 !important; }
+.sahaba-side { background: linear-gradient(180deg,#0d1430 0%,#0a1026 100%) !important; color: #dbe4ff !important; border-color: rgba(255,255,255,.08) !important; }
+.sahaba-side .gradient-text { color: #fff !important; -webkit-text-fill-color: #fff !important; }
+.sahaba-side .side-sub { color: #8290b4 !important; }
+.sahaba-side .sahaba-nav { color: #93a1c7 !important; border-radius: 11px; }
+.sahaba-side .sahaba-nav:hover { background: rgba(255,255,255,.06) !important; color: #fff !important; }
+.sahaba-side .sahaba-nav.active { background: linear-gradient(90deg,rgba(124,108,255,.28),rgba(124,108,255,.06)) !important; color: #fff !important; box-shadow: inset 2px 0 0 #8d7dff !important; font-weight: 700; }
+.sahaba-side .sahaba-nav.active svg { color: #a99bff !important; }
+
+.sahaba-main { background: #f5f7fc !important; color: #1a2340 !important; color-scheme: light !important; }
+.sahaba-main .sahaba-topbar { background: #fff !important; border-color: #e4e8f2 !important; }
+.sahaba-main .sahaba-search { background: #fff !important; border-color: #e4e8f2 !important; box-shadow: 0 4px 14px rgba(30,45,90,.04) !important; color: #66708f !important; }
+.sahaba-main .sahaba-search input { color: #1a2340 !important; }
+.sahaba-main .sahaba-search input::placeholder { color: #96a0b8 !important; }
+.sahaba-main .sahaba-iconbtn { background: #fff !important; border: 1px solid #e4e8f2 !important; color: #66708f !important; border-radius: 12px; }
+.sahaba-main .sahaba-lang button { color: #4a5576 !important; }
+.sahaba-main .sahaba-toolbar { background: #fff !important; border-color: #e7ebf5 !important; color: #1a2340 !important; }
+.sahaba-main .sahaba-toolbar h2, .sahaba-main .sahaba-toolbar button { color: #1a2340 !important; }
+.sahaba-main .sahaba-toolbar button.sahaba-danger { color: #e11d48 !important; }
+.sahaba-main .sahaba-toolbar .sahaba-muted, .sahaba-main .sahaba-toolbar .sahaba-crumb:not(.active) { color: #7f8aa6 !important; }
+.sahaba-main .sahaba-pill { background: #eef1f8 !important; color: #6b7694 !important; }
+.sahaba-main .sahaba-layout { background: #fff !important; border-color: #e4e8f2 !important; }
+.sahaba-main .sahaba-layout button { color: #8b95af !important; }
+.sahaba-main .sahaba-layout button.active { background: #e9e7ff !important; color: #5b4bd6 !important; }
+.sahaba-main .btn-ghost { background: #fff !important; color: #4a5576 !important; border-color: #e2e7f2 !important; box-shadow: 0 2px 8px rgba(30,45,90,.03) !important; }
+.sahaba-main .btn-ghost:hover:not(:disabled) { background: #f2f4fa !important; }
+.sahaba-main .sahaba-canvas { background: #f5f7fc !important; }
+.sahaba-main .sahaba-banner { background: linear-gradient(110deg,#202a58,#3a2f7a 55%,#176b73) !important; box-shadow: 0 14px 30px rgba(40,45,110,.18) !important; }
+.sahaba-main .sahaba-banner-icon { background: rgba(255,255,255,.14) !important; }
+.sahaba-main .sahaba-banner span { color: #c8d2f5 !important; }
+.sahaba-main .sahaba-file { background: #fff !important; border-color: #e7ebf5 !important; box-shadow: 0 8px 22px rgba(34,45,85,.045) !important; color: #1a2340 !important; }
+.sahaba-main .sahaba-file:hover { border-color: #c9c4ff !important; background: #fff !important; }
+.sahaba-main .sahaba-file.selected { background: #eeeaff !important; border-color: #7c6cff !important; }
+.sahaba-main .sahaba-thumb { background: linear-gradient(135deg,#8d7dff,#5c6cf0) !important; color: #fff !important; border-radius: 11px; }
+.sahaba-main .sahaba-thumb svg { color: #fff !important; }
+.sahaba-main .sahaba-grid .sahaba-file:nth-child(4n+2) .sahaba-thumb { background: linear-gradient(135deg,#3fc9c3,#2a9fd8) !important; }
+.sahaba-main .sahaba-grid .sahaba-file:nth-child(4n+3) .sahaba-thumb { background: linear-gradient(135deg,#ff9a76,#ff6f91) !important; }
+.sahaba-main .sahaba-grid .sahaba-file:nth-child(4n+4) .sahaba-thumb { background: linear-gradient(135deg,#7ec8ff,#5b8cff) !important; }
+.sahaba-main .sahaba-meta { color: #8b95af !important; }
+.sahaba-main .sahaba-list { background: #fff !important; border-color: #e7ebf5 !important; color: #1a2340 !important; }
+.sahaba-main .sahaba-list-head { background: #f7f8fc !important; border-color: #eef1f7 !important; color: #7f8aa6 !important; }
+.sahaba-main .sahaba-list-row { border-color: #eef1f7 !important; color: #1a2340 !important; }
+.sahaba-main .sahaba-list-row:hover { background: #f7f8fc !important; }
+.sahaba-main .sahaba-empty-wrap h3 { color: #1a2340 !important; }
+.sahaba-main .sahaba-empty-wrap p { color: #7f8aa6 !important; }
+.sahaba-main .sahaba-drop { background: rgba(245,247,252,.9) !important; color: #4a5576 !important; }
+.sahaba-main .sahaba-uploads { background: #fff !important; border-color: #e7ebf5 !important; }
+.sahaba-main .sahaba-upload-track { background: #e7e9f2 !important; }
+.sahaba-main .sahaba-upload-track > div { background: linear-gradient(90deg,#7c6cff,#35d6d0) !important; }
+.sahaba-main .sahaba-popover { background: #fff !important; border-color: #e7ebf5 !important; color: #1a2340 !important; }
+.sahaba-main .sahaba-popover p, .sahaba-main .sahaba-popover span, .sahaba-main .sahaba-popover button { color: #4a5576 !important; }
+
+/* Sahaba — refreshed sign in */
+.sahaba-auth { color-scheme: dark; }
+.sahaba-auth-brand {
+  background:
+    radial-gradient(520px 520px at 8% 105%, rgba(124,108,255,.45), transparent 66%),
+    radial-gradient(420px 420px at 92% -5%, rgba(53,214,208,.22), transparent 68%),
+    linear-gradient(145deg,#121b3d 0%,#0b1128 55%,#0a1024 100%);
+}
+.sahaba-auth .gradient-text { background: linear-gradient(90deg,#a99bff,#59e0d7); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.sahaba-auth-card {
+  background: rgba(255,255,255,.055);
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 24px;
+  box-shadow: 0 25px 60px rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.08) inset;
+  backdrop-filter: blur(18px);
+}
+.sahaba-auth .field { background: rgba(5,9,22,.55); border-color: rgba(255,255,255,.12); border-radius: 13px; padding: .8rem .95rem; color: #dfe7ff; }
+.sahaba-auth .field:focus { border-color: #7c6cff; box-shadow: 0 0 0 3px rgba(124,108,255,.18); }

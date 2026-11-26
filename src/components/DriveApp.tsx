@@ -272,13 +272,13 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
   const sameSpace = selectedItems.length > 0 && selectedItems.every((i) => i.space_id === selectedItems[0].space_id)
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-[#080c18] text-[#e8ecff]" onClick={() => setCtx(null)}>
+    <div className="sahaba-shell flex h-full w-full overflow-hidden bg-[#080c18] text-[#e8ecff]" onClick={() => setCtx(null)}>
       {sidebar && <div className="fixed inset-0 z-30 bg-black/60 lg:hidden" onClick={() => setSidebar(false)} />}
 
-      <aside className={`fixed inset-y-0 end-0 z-40 flex w-72 flex-col border-s border-white/10 bg-[#0c1224] transition-transform lg:static lg:z-auto lg:translate-x-0 ${sidebar ? 'translate-x-0' : 'translate-x-full'}`}>
+      <aside className={`sahaba-side fixed inset-y-0 end-0 z-40 flex w-72 flex-col border-s border-white/10 bg-[#0c1224] transition-transform lg:static lg:z-auto lg:translate-x-0 ${sidebar ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="flex items-center gap-3 px-5 py-5">
-          <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-[#6d7cff] to-[#a855f7] shadow-lg shadow-[#6d7cff]/25"><Cloud size={21} /></div>
-          <div><h1 className="gradient-text text-xl font-black">سَحابة</h1><p className="text-[10px] text-[#707ca5]">{t('Your drive', 'درايفك المحلي')}</p></div>
+          <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-br from-[#7c6cff] via-[#5b8cff] to-[#35d6d0] shadow-lg shadow-[#6d7cff]/25"><Cloud size={21} /></div>
+          <div><h1 className="text-xl font-black tracking-tight text-white">Sahaba</h1><p className="side-sub text-[10px]">{t('Your drive', 'درايفك المحلي')}</p></div>
           <button className="ms-auto text-[#8f9bc2] lg:hidden" onClick={() => setSidebar(false)}><X size={18} /></button>
         </div>
 
@@ -302,7 +302,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
           ))}
           <p className="px-3 pb-1 pt-5 text-[10px] font-bold tracking-wide text-[#5f6b93]">{t('Team spaces', 'مساحات الفرق')}</p>
           {spaces.filter((s) => s.kind === 'team').map((s) => (
-            <button key={s.id} onClick={() => navigate('drive', { space: s.id })} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${view === 'drive' && spaceId === s.id ? 'bg-[#6d7cff2e] text-white' : 'text-[#9ca8d0] hover:bg-white/5'}`}>
+            <button key={s.id} onClick={() => navigate('drive', { space: s.id })} className={`sahaba-nav flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${view === 'drive' && spaceId === s.id ? 'active' : ''}`}>
               <Users size={16} className="text-[#9aa9ff]" /><span className="truncate">{displaySpace(s.name)}</span>
             </button>
           ))}
@@ -318,26 +318,26 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex shrink-0 items-center gap-2 border-b border-white/10 bg-[#0a1020]/80 px-4 py-3 backdrop-blur">
-          <button className="rounded-lg p-2 text-[#9aa6ce] hover:bg-white/10 lg:hidden" onClick={() => setSidebar(true)}><Menu size={20} /></button>
-          <div className="flex max-w-xl flex-1 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 focus-within:border-[#6d7cff]">
+      <div className="sahaba-main flex min-w-0 flex-1 flex-col">
+        <header className="sahaba-topbar flex shrink-0 items-center gap-2 border-b border-white/10 bg-[#0a1020]/80 px-4 py-3 backdrop-blur">
+          <button className="sahaba-iconbtn rounded-lg p-2 lg:hidden" onClick={() => setSidebar(true)}><Menu size={20} /></button>
+          <div className="sahaba-search flex max-w-xl flex-1 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 focus-within:border-[#7c6cff]">
             <Search size={17} className="text-[#7e8ab2]" />
             <input className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-[#66739c]" value={query} onChange={(e) => setQuery(e.target.value)}
               placeholder={t('Search your files…', 'ابحث في ملفاتك...')} onKeyDown={(e) => {
                 if (e.key === 'Enter') { setFilters({ q: query, kind: '', mime: '', tag: '', from: '', to: '', min: '', max: '', starred: false, sort: 'updated' }); setView('search') }
               }} />
-            <button title={t('Advanced search', 'بحث متقدم')} className="text-[#8f9bc2] hover:text-[#aab6ff]" onClick={() => setSearchOpen(true)}><SlidersHorizontal size={17} /></button>
+            <button title={t('Advanced search', 'بحث متقدم')} className="text-[#8f9bc2] hover:text-[#7c6cff]" onClick={() => setSearchOpen(true)}><SlidersHorizontal size={17} /></button>
           </div>
           <div className="ms-auto flex items-center gap-1">
-            <LangToggle />
-            <button className="relative rounded-xl p-2.5 text-[#a4b0d6] hover:bg-white/10" title={t('Notifications', 'الإشعارات')} onClick={() => setNotifOpen(!notifOpen)}><Bell size={19} />
-              {unread > 0 && <span className="absolute -start-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-bold">{unread}</span>}</button>
-            <button className="hidden rounded-xl p-2.5 text-[#a4b0d6] hover:bg-white/10 sm:block" title={t('Teams', 'الفرق')} onClick={() => setTeamsOpen(true)}><Users size={19} /></button>
-            {user.isAdmin && <button className="hidden rounded-xl p-2.5 text-[#a4b0d6] hover:bg-white/10 sm:block" title={t('Admin console', 'لوحة التحكم')} onClick={() => setAdminOpen(true)}><ShieldCheck size={19} /></button>}
+            <span className="sahaba-lang"><LangToggle /></span>
+            <button className="sahaba-iconbtn relative rounded-xl p-2.5" title={t('Notifications', 'الإشعارات')} onClick={() => setNotifOpen(!notifOpen)}><Bell size={19} />
+              {unread > 0 && <span className="absolute -start-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">{unread}</span>}</button>
+            <button className="sahaba-iconbtn hidden rounded-xl p-2.5 sm:block" title={t('Teams', 'الفرق')} onClick={() => setTeamsOpen(true)}><Users size={19} /></button>
+            {user.isAdmin && <button className="sahaba-iconbtn hidden rounded-xl p-2.5 sm:block" title={t('Admin console', 'لوحة التحكم')} onClick={() => setAdminOpen(true)}><ShieldCheck size={19} /></button>}
           </div>
 
-          {notifOpen && <div className="absolute start-4 top-16 z-50 w-[min(360px,90vw)] overflow-hidden rounded-2xl border border-white/10 bg-[#121a30] shadow-2xl">
+          {notifOpen && <div className="sahaba-popover absolute start-4 top-16 z-50 w-[min(360px,90vw)] overflow-hidden rounded-2xl border border-white/10 bg-[#121a30] shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 text-sm font-bold">
               {t('Notifications', 'الإشعارات')} <button className="text-[11px] text-[#9aa9ff]" onClick={() => patch('/notifications/read', {}).then(loadShell)}>{t('Mark all as read', 'تعليم الكل كمقروء')}</button></div>
             <div className="scroll-thin max-h-80 overflow-auto">
@@ -352,16 +352,16 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
           </div>}
         </header>
 
-        <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-white/5 px-5 py-4">
-          {view === 'drive' && <button className="text-[#9aa6ce] hover:text-white" onClick={() => { setFolderId(null); setView('drive') }} title={t('Root', 'الجذر')}><Home size={17} /></button>}
+        <div className="sahaba-toolbar flex shrink-0 flex-wrap items-center gap-3 border-b border-white/5 px-5 py-4">
+          {view === 'drive' && <button className="sahaba-muted" onClick={() => { setFolderId(null); setView('drive') }} title={t('Root', 'الجذر')}><Home size={17} /></button>}
           {trail.map((crumb, i) => (
             <span key={crumb.id} className="flex items-center gap-2 text-sm">
               {i > 0 && <Back size={14} className="text-[#56628c]" />}
-              <button className={i === trail.length - 1 ? 'font-bold' : 'text-[#9aa6ce] hover:text-white'} onClick={() => { setFolderId(crumb.id); setView('drive') }}>{crumb.name}</button>
+              <button className={i === trail.length - 1 ? 'active font-bold' : 'sahaba-crumb'} onClick={() => { setFolderId(crumb.id); setView('drive') }}>{crumb.name}</button>
             </span>
           ))}
           {view !== 'drive' && <h2 className="text-lg font-bold">{title}</h2>}
-          <span className="rounded-full bg-white/5 px-2.5 py-1 text-[11px] text-[#8f9bc2]">{t('{n} items', '{n} عنصر', { n: items.length })}</span>
+          <span className="sahaba-pill rounded-full px-2.5 py-1 text-[11px]">{t('{n} items', '{n} عنصر', { n: items.length })}</span>
           {selected.length > 0 && <div className="flex flex-wrap items-center gap-1 rounded-xl border border-[#6d7cff]/40 bg-[#6d7cff12] px-2 py-1">
             <span className="px-1 text-[11px] font-bold text-[#aab6ff]">{t('{n} selected', '{n} محدد', { n: selected.length })}</span>
             <button disabled={bulkBusy} className="rounded-lg px-2 py-1 text-[11px] text-[#9aa6ce] hover:bg-white/10 disabled:opacity-40"
@@ -369,50 +369,56 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
             <span className="mx-1 h-4 w-px bg-white/10" />
             {bulkBusy ? <span className="px-2 text-[11px] text-[#9aa9ff]">{t('Working…', 'جاري التنفيذ...')}</span> : view === 'trash' ? <>
               <button className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-[#b8c4e8] hover:bg-white/10" onClick={() => runBulk('restore', {}, (n) => t('{n} items restored', 'تمت استعادة {n} عنصر', { n }))}><RefreshCw size={13} /> {t('Restore', 'استعادة')}</button>
-              <button className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-rose-300 hover:bg-white/10" onClick={() => runBulk('delete', {}, (n) => t('{n} items permanently deleted', 'تم حذف {n} عنصر نهائياً', { n }))}><Trash2 size={13} /> {t('Delete permanently', 'حذف نهائي')}</button>
+              <button className="sahaba-danger flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-rose-300 hover:bg-white/10" onClick={() => runBulk('delete', {}, (n) => t('{n} items permanently deleted', 'تم حذف {n} عنصر نهائياً', { n }))}><Trash2 size={13} /> {t('Delete permanently', 'حذف نهائي')}</button>
             </> : <>
               <button disabled={!selectedFiles.length} className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-[#b8c4e8] hover:bg-white/10 disabled:opacity-40" onClick={bulkDownload}><Download size={13} /> {t('Download', 'تنزيل')}</button>
               <button className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-[#b8c4e8] hover:bg-white/10" onClick={() => runBulk(allStarred ? 'unstar' : 'star', {}, (n) => t('{n} items updated', 'تم تحديث {n} عنصر', { n }))}><Star size={13} fill={allStarred ? 'currentColor' : 'none'} /> {allStarred ? t('Remove star', 'إزالة المفضلة') : t('Star', 'مفضلة')}</button>
               <button className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-[#b8c4e8] hover:bg-white/10" onClick={() => setDialog({ type: 'bulkTags' })}><TagIcon size={13} /> {t('Tags', 'وسوم')}</button>
               <button className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-[#b8c4e8] hover:bg-white/10" onClick={requestBulkMove}><Move size={13} /> {t('Move', 'نقل')}</button>
-              <button className="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-rose-300 hover:bg-white/10" onClick={() => runBulk('trash', {}, (n) => t('{n} items moved to trash', 'نُقل {n} عنصر للسلة', { n }))}><Trash2 size={13} /> {t('Trash', 'سلة')}</button>
+              <button className="sahaba-danger flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] text-rose-300 hover:bg-white/10" onClick={() => runBulk('trash', {}, (n) => t('{n} items moved to trash', 'نُقل {n} عنصر للسلة', { n }))}><Trash2 size={13} /> {t('Trash', 'سلة')}</button>
             </>}
             <button className="rounded-lg p-1 text-[#8f9bc2] hover:bg-white/10" title={t('Clear selection', 'إلغاء التحديد')} onClick={() => { setSelected([]); setDetail(null) }}><X size={14} /></button>
           </div>}
           <div className="ms-auto flex items-center gap-2">
             <button className="btn btn-ghost px-3 py-2 !text-xs" onClick={() => fileInput.current?.click()}><Upload size={15} /> {t('Upload', 'رفع')}</button>
             <button className="btn btn-ghost px-3 py-2 !text-xs" onClick={() => setDialog({ type: 'folder' })}><FolderPlus size={15} /> {t('Folder', 'مجلد')}</button>
-            <div className="flex rounded-xl border border-white/10 bg-white/5 p-0.5">
-              <button className={`rounded-lg p-1.5 ${layout === 'grid' ? 'bg-[#6d7cff33] text-white' : 'text-[#7f8bb4]'}`} onClick={() => setLayout('grid')} title={t('Grid', 'شبكة')}><LayoutGrid size={16} /></button>
-              <button className={`rounded-lg p-1.5 ${layout === 'list' ? 'bg-[#6d7cff33] text-white' : 'text-[#7f8bb4]'}`} onClick={() => setLayout('list')} title={t('List', 'قائمة')}><List size={16} /></button>
+            <div className="sahaba-layout flex rounded-xl border border-white/10 bg-white/5 p-0.5">
+              <button className={`rounded-lg p-1.5 ${layout === 'grid' ? 'active' : ''}`} onClick={() => setLayout('grid')} title={t('Grid', 'شبكة')}><LayoutGrid size={16} /></button>
+              <button className={`rounded-lg p-1.5 ${layout === 'list' ? 'active' : ''}`} onClick={() => setLayout('list')} title={t('List', 'قائمة')}><List size={16} /></button>
             </div>
           </div>
         </div>
 
-        <div className={`scroll-thin relative min-h-0 flex-1 overflow-auto p-5 ${dragging ? 'drop-active' : ''}`}
+        <div className={`sahaba-canvas scroll-thin relative min-h-0 flex-1 overflow-auto p-5 ${dragging ? 'drop-active' : ''}`}
           onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
           onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false) }}
           onDrop={(e) => { e.preventDefault(); setDragging(false); upload(e.dataTransfer.files) }}>
 
-          {dragging && <div className="pointer-events-none absolute inset-0 z-20 grid place-items-center bg-[#080c18]/70 text-xl font-bold text-[#aab6ff]"><Upload size={40} className="mb-3" /> {t('Drop files to upload', 'أفلت الملفات للرفع')}</div>}
+          {dragging && <div className="sahaba-drop pointer-events-none absolute inset-0 z-20 grid place-items-center text-xl font-bold"><Upload size={40} className="mb-3" /> {t('Drop files to upload', 'أفلت الملفات للرفع')}</div>}
+          {!loading && view === 'drive' && !folderId && items.length > 0 && <div className="sahaba-banner mb-5 flex items-center gap-4 rounded-2xl px-5 py-4 text-white">
+            <div className="sahaba-banner-icon grid h-10 w-10 shrink-0 place-items-center rounded-xl"><Upload size={19} /></div>
+            <div className="min-w-0"><b className="block text-[13px]">{t('Your files are safely in your drive', 'ملفاتك محفوظة بأمان في درايفك')}</b><span className="mt-1 block text-[11px]">{formatBytes(used)} / {formatBytes(user.storageLimit)} · {t('Synced automatically', 'مزامنة تلقائياً')}</span></div>
+            <span className="ms-auto shrink-0 rounded-full bg-white/15 px-3 py-1.5 text-[11px]">{t('All good', 'كل تمام')}</span>
+          </div>}
+          <div className="sahaba-empty-wrap">
           {loading ? <Spinner label={t('Loading files…', 'جاري تحميل الملفات...')} /> : items.length === 0 ? (
             <Empty icon={view === 'trash' ? Trash2 : view === 'starred' ? Star : Folder} title={view === 'search' ? t('No matching results', 'مفيش نتائج مطابقة') : t('Nothing here yet', 'مفيش ملفات هنا')}
               hint={t('Drag your files here or press Upload to get started.', 'اسحب ملفاتك وأفلتها هنا أو اضغط رفع للبدء.')}
               action={<button className="btn btn-primary mt-2" onClick={() => fileInput.current?.click()}><FilePlus2 size={16} /> {t('Upload files', 'رفع ملفات')}</button>} />
           ) : layout === 'grid' ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            <div className="sahaba-grid grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {items.map((item) => (
                 <button key={item.id} onClick={(e) => {
                   if (e.ctrlKey || e.metaKey || e.shiftKey) setSelected((s) => s.includes(item.id) ? s.filter((x) => x !== item.id) : [...s, item.id])
                   else { setSelected([item.id]); setDetail(item) }
                 }} onDoubleClick={() => openItem(item)}
                   onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setCtx({ x: e.clientX, y: e.clientY, item }); setSelected([item.id]) }}
-                  className={`card-hover group relative flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-white/[.035] p-4 text-start ${selected.includes(item.id) ? 'selected' : ''}`}>
+                  className={`sahaba-file card-hover group relative flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-white/[.035] p-4 text-start ${selected.includes(item.id) ? 'selected' : ''}`}>
                   <button className="absolute start-3 top-3 text-amber-400 opacity-0 transition group-hover:opacity-100" onClick={(e) => { e.stopPropagation(); menuAction('star', item) }} title={t('Star', 'مفضلة')}>
                     <Star size={16} fill={item.starred ? 'currentColor' : 'none'} className={item.starred ? 'opacity-100' : ''} /></button>
-                  <div className="grid h-16 w-16 place-items-center rounded-2xl bg-white/5"><ItemIcon item={item} size={38} /></div>
+                  <div className="sahaba-thumb grid h-16 w-16 place-items-center"><ItemIcon item={item} size={38} /></div>
                   <div className="w-full"><p className="truncate text-sm font-semibold">{item.name}</p>
-                    <p className="mt-1 flex items-center gap-2 text-[10px] text-[#7c88b0]">{formatDate(item.updated_at)}{item.kind === 'file' && <><span>•</span>{formatBytes(item.size)}</>}{item.version > 1 && <><span>•</span>v{item.version}</>}</p></div>
+                    <p className="sahaba-meta mt-1 flex items-center gap-2 text-[10px] text-[#7c88b0]">{formatDate(item.updated_at)}{item.kind === 'file' && <><span>•</span>{formatBytes(item.size)}</>}{item.version > 1 && <><span>•</span>v{item.version}</>}</p></div>
                   <div className="flex w-full items-center gap-2 text-[10px] text-[#7884ad]">
                     {item.tags.slice(0, 2).map((tag) => <span key={tag.id} className="flex items-center gap-1 rounded-full px-2 py-0.5" style={{ background: `${tag.color}22`, color: tag.color }}><span className="h-1.5 w-1.5 rounded-full" style={{ background: tag.color }} />{tag.name}</span>)}
                     {item.comments_count > 0 && <span className="ms-auto flex items-center gap-1"><MessageSquare size={11} />{item.comments_count}</span>}
@@ -421,8 +427,8 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
               ))}
             </div>
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-white/10">
-              <div className="grid grid-cols-[1fr_120px_140px_100px] gap-3 border-b border-white/10 bg-white/5 px-4 py-2.5 text-xs font-bold text-[#9aa6ce] max-md:grid-cols-[1fr_80px_40px]">
+            <div className="sahaba-list overflow-hidden rounded-2xl border border-white/10">
+              <div className="sahaba-list-head grid grid-cols-[1fr_120px_140px_100px] gap-3 border-b border-white/10 bg-white/5 px-4 py-2.5 text-xs font-bold text-[#9aa6ce] max-md:grid-cols-[1fr_80px_40px]">
                 <span>{t('Name', 'الاسم')}</span><span className="max-md:hidden">{t('Size', 'الحجم')}</span><span>{t('Last modified', 'آخر تعديل')}</span><span>{t('Actions', 'إجراءات')}</span>
               </div>
               {items.map((item) => (
@@ -431,11 +437,11 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
                   else { setSelected([item.id]); setDetail(item) }
                 }} onDoubleClick={() => openItem(item)}
                   onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setCtx({ x: e.clientX, y: e.clientY, item }); setSelected([item.id]) }}
-                  className={`grid w-full grid-cols-[1fr_120px_140px_100px] items-center gap-3 border-b border-white/5 px-4 py-2.5 text-start text-sm transition hover:bg-white/5 max-md:grid-cols-[1fr_80px_40px] ${selected.includes(item.id) ? 'bg-[#6d7cff1a]' : ''}`}>
+                  className={`sahaba-list-row grid w-full grid-cols-[1fr_120px_140px_100px] items-center gap-3 border-b border-white/5 px-4 py-2.5 text-start text-sm transition hover:bg-white/5 max-md:grid-cols-[1fr_80px_40px] ${selected.includes(item.id) ? 'bg-[#6d7cff1a]' : ''}`}>
                   <span className="flex min-w-0 items-center gap-3"><ItemIcon item={item} size={25} /><span className="truncate">{item.name}</span>{item.starred && <Star size={13} className="text-amber-400" fill="currentColor" />}</span>
-                  <span className="text-xs text-[#8793bb] max-md:hidden">{item.kind === 'file' ? formatBytes(item.size) : '—'}</span>
-                  <span className="text-xs text-[#8793bb]">{formatDate(item.updated_at)}</span>
-                  <span className="flex gap-1 text-[#8793bb]">
+                  <span className="sahaba-meta text-xs text-[#8793bb] max-md:hidden">{item.kind === 'file' ? formatBytes(item.size) : '—'}</span>
+                  <span className="sahaba-meta text-xs text-[#8793bb]">{formatDate(item.updated_at)}</span>
+                  <span className="sahaba-meta flex gap-1 text-[#8793bb]">
                     <span title={t('Share', 'مشاركة')} onClick={(e) => { e.stopPropagation(); setDialog({ type: 'share', item }) }}><Share2 size={15} className="hover:text-white" /></span>
                     <span title={t('Versions', 'إصدارات')} onClick={(e) => { e.stopPropagation(); setDialog({ type: 'versions', item }) }}><History size={15} className="hover:text-white" /></span>
                   </span>
@@ -443,10 +449,11 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
               ))}
             </div>
           )}
+          </div>
         </div>
 
-        {uploads.length > 0 && <div className="shrink-0 space-y-2 border-t border-white/10 bg-[#0b1120] px-5 py-3">
-          {uploads.map((u) => <div key={u.name} className="flex items-center gap-3 text-xs"><Upload size={13} className="text-[#9aa9ff]" /><span className="w-40 truncate">{u.name}</span><div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10"><div className="h-full bg-[#6d7cff] transition-all" style={{ width: `${u.pct}%` }} /></div><span className="w-9 text-end text-[#8f9bc2]">{u.pct}%</span></div>)}
+        {uploads.length > 0 && <div className="sahaba-uploads shrink-0 space-y-2 border-t border-white/10 bg-[#0b1120] px-5 py-3">
+          {uploads.map((u) => <div key={u.name} className="flex items-center gap-3 text-xs"><Upload size={13} className="text-[#9aa9ff]" /><span className="w-40 truncate">{u.name}</span><div className="sahaba-upload-track h-1.5 flex-1 overflow-hidden rounded-full bg-white/10"><div className="h-full transition-all" style={{ width: `${u.pct}%` }} /></div><span className="w-9 text-end text-[#8f9bc2]">{u.pct}%</span></div>)}
         </div>}
       </div>
 
@@ -521,7 +528,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
 
 function NavButton({ icon: Icon, label, active, onClick, badge }: { icon: any; label: string; active: boolean; onClick: () => void; badge?: number }) {
   const t = useT()
-  return <button onClick={onClick} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${active ? 'bg-[#6d7cff2e] font-semibold text-white' : 'text-[#9ca8d0] hover:bg-white/5 hover:text-white'}`}>
+  return <button onClick={onClick} className={`sahaba-nav flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${active ? 'active' : ''}`}>
     <Icon size={17} className={active ? 'text-[#aab6ff]' : ''} /><span className="truncate">{label}</span>
     {!!badge && <span className="ms-auto rounded-full bg-white/10 px-2 py-0.5 text-[10px]" title={t('Teams', 'الفرق')}>{badge}</span>}
   </button>

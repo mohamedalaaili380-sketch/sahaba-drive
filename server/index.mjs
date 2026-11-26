@@ -56,7 +56,7 @@ const server = http.createServer(async (req, res) => {
     if (!pathname.startsWith('/api/')) {
       if (!PRODUCTION) {
         res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' })
-        res.end('سَحابة API — افتح الواجهة على http://localhost:5173')
+        res.end('Sahaba API — open the UI at http://localhost:5173')
       } else serveStatic(req, res, pathname)
       return
     }
@@ -97,5 +97,5 @@ if (process.env.SAHABA_DRIVE_MIGRATE_FROM_URL) {
 startBackups()
 
 server.listen(PORT, HOST, () => {
-  console.log(`☁️  سَحابة API جاهز على http://${HOST}:${PORT}`)
+  console.log(`☁️  Sahaba API ready at http://${HOST}:${PORT}`)
 })
