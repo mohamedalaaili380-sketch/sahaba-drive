@@ -34,9 +34,9 @@ export const routes = [
       const user = requireUser(req)
       const spaces = all(`SELECT s.*, m.role,
         (SELECT COUNT(*) FROM items i WHERE i.space_id = s.id AND i.deleted_at IS NULL) AS item_count
-        FROM spaces s JOIN space_members m ON m.space_id = s.id
-        WHERE m.user_id = ? ORDER BY s.kind DESC, s.created_at`, user.id)
-        .map((s) => ({ ...s, role: s.owner_id === user.id ? 'owner' : s.role }))
+        FROM spaces s LEFT JOIN space_members m ON m.space_id = s.id AND m.user_id = ?
+        WHERE m.user_id = ? OR s.owner_id = ? ORDER BY s.kind DESC, s.created_at`, user.id, user.id, user.id)
+        .map((s) => ({ ...s, role: s.owner_id === user.id ? 'owner' : (s.role || 'viewer') }))
       sendJson(res, 200, { spaces })
     },
   },

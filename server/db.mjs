@@ -160,6 +160,13 @@ if (bootstrapAdminEmail) {
   if (target) db.prepare('UPDATE users SET is_admin = 1 WHERE id = ?').run(target.id)
 }
 
+// Older databases could have spaces created before space_members existed.
+// Backfill owner memberships so every space appears in /api/spaces again.
+db.exec(`
+  INSERT OR IGNORE INTO space_members (space_id, user_id, role)
+  SELECT id, owner_id, 'owner' FROM spaces
+`)
+
 export const all = (sql, ...params) => db.prepare(sql).all(...params)
 export const get = (sql, ...params) => db.prepare(sql).get(...params)
 export const run = (sql, ...params) => db.prepare(sql).run(...params)
