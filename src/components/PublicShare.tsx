@@ -4,6 +4,7 @@ import { ApiError, formatBytes, formatDate, get, post } from '../api'
 import type { Comment, PublicShare as ShareInfo } from '../types'
 import { Modal } from './ui'
 import { LangToggle, useLang, useT } from '../i18n'
+import { ThemeToggle } from '../theme'
 
 type PublicItem = { id: string; parent_id: string | null; kind: string; name: string; mime: string; size: number; updated_at: number }
 
@@ -94,6 +95,7 @@ export default function PublicShare({ token }: { token: string }) {
         <div className="ms-auto flex gap-2">
           {share.allowComments && <button className="btn btn-ghost px-3 py-1.5" onClick={() => setShowComments(true)}><MessageSquare size={15} /> {t('Comments ({n})', 'تعليقات ({n})', { n: comments.length })}</button>}
           {canDownload && <a className="btn btn-primary px-3 py-1.5" href={contentUrlFor(undefined, true)}><Download size={15} /> {t('Download', 'تنزيل')}</a>}
+          <ThemeToggle />
           <LangToggle />
         </div>
       </header>

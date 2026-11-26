@@ -359,3 +359,88 @@ a { color: #0f766e; }
     radial-gradient(760px 420px at 10% -10%, rgba(45,212,191,.18), transparent 62%),
     #03252c !important;
 }
+
+/* ---------- Sahaba — dark mode ---------- */
+[data-theme="dark"] { color-scheme: dark; }
+[data-theme="dark"] body { background: #03252c !important; }
+[data-theme="dark"] .sahaba-shell { background: #03252c !important; color: #e6fffb !important; }
+[data-theme="dark"] .sahaba-side {
+  background:
+    radial-gradient(420px 260px at 0% 0%, rgba(45,212,191,.16), transparent 68%),
+    linear-gradient(180deg,#021c22 0%,#01161a 100%) !important;
+  color: #d9fff9 !important;
+  border-color: rgba(94,234,212,.14) !important;
+}
+[data-theme="dark"] .sahaba-side .side-sub { color: #86b8b5 !important; }
+[data-theme="dark"] .sahaba-side .sahaba-nav { color: #9ecac7 !important; }
+[data-theme="dark"] .sahaba-side .sahaba-nav:hover { background: rgba(94,234,212,.08) !important; color: #fff !important; }
+[data-theme="dark"] .sahaba-side .sahaba-nav.active {
+  background: linear-gradient(90deg,rgba(45,212,191,.2),rgba(34,211,238,.08)) !important;
+  color: #fff !important;
+}
+[data-theme="dark"] .sahaba-side .sahaba-section-title { color: #6f9d9b !important; }
+[data-theme="dark"] .sahaba-side .scroll-thin { scrollbar-color: #2d6a70 transparent; }
+[data-theme="dark"] .sahaba-main { background: #03252c !important; color: #e6fffb !important; color-scheme: dark !important; }
+[data-theme="dark"] .sahaba-main .sahaba-topbar { background: #062f36 !important; border-color: rgba(94,234,212,.14) !important; }
+[data-theme="dark"] .sahaba-main .sahaba-search { background: #07343b !important; border-color: rgba(94,234,212,.16) !important; color: #bfe9e6 !important; box-shadow: 0 4px 14px rgba(0,0,0,.18) !important; }
+[data-theme="dark"] .sahaba-main .sahaba-search input { color: #e6fffb !important; }
+[data-theme="dark"] .sahaba-main .sahaba-search input::placeholder { color: #86b8b5 !important; }
+[data-theme="dark"] .sahaba-main .sahaba-search:focus-within { border-color: #2dd4bf !important; box-shadow: 0 0 0 3px rgba(45,212,191,.14) !important; background: #07343b !important; }
+[data-theme="dark"] .sahaba-main .sahaba-iconbtn { background: #07343b !important; border-color: rgba(94,234,212,.16) !important; color: #bfe9e6 !important; }
+[data-theme="dark"] .sahaba-main .sahaba-iconbtn:hover { background: #0b3d45 !important; }
+[data-theme="dark"] .sahaba-main .sahaba-lang button,
+[data-theme="dark"] .sahaba-main .sahaba-theme button { background: #07343b !important; border: 1px solid rgba(94,234,212,.16) !important; color: #bfe9e6 !important; }
+[data-theme="dark"] .sahaba-main .sahaba-lang button:hover,
+[data-theme="dark"] .sahaba-main .sahaba-theme button:hover { background: #0b3d45 !important; border-color: #2dd4bf !important; color: #fff !important; }
+[data-theme="dark"] .sahaba-main .sahaba-toolbar { background: #062f36 !important; border-color: rgba(94,234,212,.12) !important; color: #e6fffb !important; }
+[data-theme="dark"] .sahaba-main .sahaba-toolbar button { color: #e6fffb !important; }
+[data-theme="dark"] .sahaba-main .sahaba-toolbar .sahaba-muted,
+[data-theme="dark"] .sahaba-main .sahaba-toolbar .sahaba-crumb:not(.active) { color: #86b8b5 !important; }
+[data-theme="dark"] .sahaba-main .sahaba-pill { background: #0b3d45 !important; color: #bfe9e6 !important; }
+[data-theme="dark"] .sahaba-main .sahaba-layout { background: #07343b !important; border-color: rgba(94,234,212,.14) !important; }
+[data-theme="dark"] .sahaba-main .sahaba-layout button { color: #86b8b5 !important; }
+[data-theme="dark"] .sahaba-main .sahaba-layout button.active { background: rgba(45,212,191,.18) !important; color: #8be9e2 !important; }
+[data-theme="dark"] .sahaba-main .btn-ghost { background: #07343b !important; color: #bfe9e6 !important; border-color: rgba(94,234,212,.18) !important; box-shadow: none !important; }
+[data-theme="dark"] .sahaba-main .btn-ghost:hover:not(:disabled) { background: #0b3d45 !important; border-color: #2dd4bf !important; }
+[data-theme="dark"] .sahaba-main .sahaba-canvas {
+  background:
+    radial-gradient(720px 260px at 88% -12%, rgba(45,212,191,.07), transparent 62%),
+    radial-gradient(520px 240px at 4% 8%, rgba(34,211,238,.05), transparent 60%),
+    #03252c !important;
+}
+[data-theme="dark"] .sahaba-hero { background: linear-gradient(180deg,#062f36,#052a31) !important; border-color: rgba(94,234,212,.12) !important; }
+[data-theme="dark"] .sahaba-hero-title { color: #e6fffb !important; }
+[data-theme="dark"] .sahaba-hero-sub { color: #86b8b5 !important; }
+[data-theme="dark"] .sahaba-hero-status { background: #07343b !important; border-color: rgba(94,234,212,.16) !important; box-shadow: none !important; }
+[data-theme="dark"] .sahaba-eyebrow,
+[data-theme="dark"] .sahaba-crumb.active { color: #5eead4 !important; }
+[data-theme="dark"] .sahaba-selection { border-color: rgba(45,212,191,.28) !important; background: rgba(45,212,191,.12) !important; color: #8be9e2 !important; }
+[data-theme="dark"] .sahaba-selection button { color: #bfe9e6 !important; }
+[data-theme="dark"] .sahaba-selection button:hover { background: rgba(45,212,191,.16) !important; }
+[data-theme="dark"] .sahaba-selection .sahaba-selection-divider { background: rgba(94,234,212,.2) !important; }
+[data-theme="dark"] .sahaba-main .sahaba-banner { background: linear-gradient(110deg,#0b5f58,#0e7490 55%,#155e75) !important; }
+[data-theme="dark"] .sahaba-main .sahaba-file { background: #062f36 !important; border-color: rgba(94,234,212,.14) !important; color: #e6fffb !important; box-shadow: 0 1px 2px rgba(0,0,0,.2), 0 10px 24px rgba(0,0,0,.16) !important; }
+[data-theme="dark"] .sahaba-main .sahaba-file:hover { background: #07343b !important; border-color: #2dd4bf !important; }
+[data-theme="dark"] .sahaba-main .sahaba-file.selected { background: rgba(45,212,191,.14) !important; border-color: #2dd4bf !important; }
+[data-theme="dark"] .sahaba-main .sahaba-thumb { box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 8px 18px rgba(0,0,0,.22) !important; }
+[data-theme="dark"] .sahaba-main .sahaba-meta { color: #86b8b5 !important; }
+[data-theme="dark"] .sahaba-main .sahaba-list { background: #062f36 !important; border-color: rgba(94,234,212,.14) !important; color: #e6fffb !important; }
+[data-theme="dark"] .sahaba-main .sahaba-list-head { background: #07343b !important; border-color: rgba(94,234,212,.12) !important; color: #86b8b5 !important; }
+[data-theme="dark"] .sahaba-main .sahaba-list-row { border-color: rgba(94,234,212,.1) !important; color: #e6fffb !important; }
+[data-theme="dark"] .sahaba-main .sahaba-list-row:hover { background: #07343b !important; }
+[data-theme="dark"] .sahaba-list-row[aria-pressed="true"] { background: rgba(45,212,191,.12) !important; }
+[data-theme="dark"] .sahaba-main .sahaba-list-row button:hover { background: rgba(94,234,212,.12) !important; }
+[data-theme="dark"] .sahaba-main .sahaba-empty-wrap h3 { color: #e6fffb !important; }
+[data-theme="dark"] .sahaba-main .sahaba-empty-wrap p { color: #86b8b5 !important; }
+[data-theme="dark"] .sahaba-empty { border-color: rgba(94,234,212,.18) !important; background: linear-gradient(180deg,#062f36,#052a31) !important; }
+[data-theme="dark"] .sahaba-main .sahaba-drop { background: rgba(3,37,44,.94) !important; color: #bfe9e6 !important; }
+[data-theme="dark"] .sahaba-main .sahaba-uploads { background: #062f36 !important; border-color: rgba(94,234,212,.14) !important; color: #bfe9e6 !important; }
+[data-theme="dark"] .sahaba-main .sahaba-uploads svg { color: #5eead4 !important; }
+[data-theme="dark"] .sahaba-main .sahaba-uploads span { color: #86b8b5 !important; }
+[data-theme="dark"] .sahaba-main .sahaba-upload-track { background: rgba(94,234,212,.14) !important; }
+[data-theme="dark"] .sahaba-main .sahaba-popover { background: #062f36 !important; border-color: rgba(94,234,212,.16) !important; color: #e6fffb !important; }
+[data-theme="dark"] .sahaba-main .sahaba-popover p,
+[data-theme="dark"] .sahaba-main .sahaba-popover span,
+[data-theme="dark"] .sahaba-main .sahaba-popover button { color: #bfe9e6 !important; }
+[data-theme="dark"] .sahaba-main .sahaba-popover button:hover { background: rgba(94,234,212,.1) !important; }
+[data-theme="dark"] .sahaba-skeleton-card { border-color: rgba(94,234,212,.12) !important; background: linear-gradient(100deg,#062f36,#0b3d45,#062f36) !important; }

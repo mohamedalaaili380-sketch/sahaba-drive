@@ -15,6 +15,7 @@ import {
 import type { SearchFilters } from './Dialogs'
 import { CommentsPanel, Editor, Preview, useItemComments } from './Viewers'
 import { LangToggle, useLang, useT } from '../i18n'
+import { ThemeToggle } from '../theme'
 import AdminPanel from './AdminPanel'
 
 type View = 'drive' | 'starred' | 'trash' | 'shared' | 'search' | 'tag'
@@ -431,6 +432,7 @@ export default function DriveApp({ user, onLogout }: { user: User; onLogout: () 
             <button title={t('Advanced search', 'بحث متقدم')} className="text-[#86b8b5] hover:text-[#0f766e]" onClick={() => setSearchOpen(true)}><SlidersHorizontal size={17} /></button>
           </div>
           <div className="ms-auto flex items-center gap-1">
+            <span className="sahaba-theme"><ThemeToggle /></span>
             <span className="sahaba-lang"><LangToggle /></span>
             <button className="sahaba-iconbtn relative rounded-xl p-2.5" title={t('Notifications', 'الإشعارات')} onClick={() => setNotifOpen(!notifOpen)}><Bell size={19} />
               {unread > 0 && <span className="absolute -start-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">{unread}</span>}</button>

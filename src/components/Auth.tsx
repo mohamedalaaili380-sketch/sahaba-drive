@@ -3,6 +3,7 @@ import { Cloud, LockKeyhole, Mail, UserRound, ArrowLeft, ArrowRight } from 'luci
 import { post } from '../api'
 import type { User } from '../types'
 import { LangToggle, useLang, useT } from '../i18n'
+import { ThemeToggle } from '../theme'
 
 export default function Auth({ onAuth }: { onAuth: (user: User) => void }) {
   const [mode, setMode] = useState<'login' | 'register'>('login')
@@ -63,7 +64,7 @@ export default function Auth({ onAuth }: { onAuth: (user: User) => void }) {
       </div>
 
       <div className="relative flex items-center justify-center px-6 py-12">
-        <div className="absolute top-4 end-4"><LangToggle /></div>
+        <div className="absolute top-4 end-4 flex items-center gap-2"><ThemeToggle /><LangToggle /></div>
         <form onSubmit={submit} className="sahaba-auth-card enter w-full max-w-[390px] space-y-5 p-9">
           <div className="sahaba-auth-mobile flex items-center gap-3 lg:hidden">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#0f766e] via-[#0e7490] to-[#22d3ee] shadow-lg shadow-[#14b8a6]/25"><Cloud size={20} /></div>

@@ -6,6 +6,7 @@ import Auth from './components/Auth'
 import DriveApp from './components/DriveApp'
 import PublicShare from './components/PublicShare'
 import { LangProvider } from './i18n'
+import { ThemeProvider } from './theme'
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null)
@@ -30,5 +31,5 @@ export default function App() {
       : !user ? <Auth onAuth={setUser} />
         : <DriveApp user={user} onLogout={() => post('/auth/logout').finally(() => { localStorage.removeItem('sahaba_token'); setUser(null) })} />
 
-  return <LangProvider>{content}</LangProvider>
+  return <LangProvider><ThemeProvider>{content}</ThemeProvider></LangProvider>
 }
